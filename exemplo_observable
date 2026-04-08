@@ -1,0 +1,44 @@
+import { Observable } from "rxjs";
+
+// https://www.youtube.com/@KlausWolfgram/videos
+
+// Função que retorna um Observable
+function contador(): Observable<number> {
+  return new Observable(observer => {
+    let valor = 1;
+
+    const intervalo = setInterval(() => {
+      console.log("Emitindo:", valor);
+      observer.next(valor);
+
+      if (valor === 5) {
+        observer.complete(); // finaliza
+        clearInterval(intervalo);
+      }
+
+      valor++;
+    }, 1000);
+
+    // cleanup (quando cancelar)
+    return () => {
+      console.log("Observable cancelado");
+      clearInterval(intervalo);
+    };
+  });
+}
+
+//-- consumindo observable --//
+const obs$ = contador();
+
+obs$
+
+const subscription = obs$.subscribe({
+  next: valor => console.log("Recebido:", valor),
+  error: erro => console.log("Erro:", erro),
+  complete: () => console.log("Finalizado")
+});
+
+//-- cancelando subscricao --//
+setTimeout(() => {
+  subscription.unsubscribe();
+}, 3000);

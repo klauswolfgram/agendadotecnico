@@ -1,0 +1,53 @@
+import { Component, Input, OnInit, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+
+@Component({
+  selector: 'app-exemplo',
+  template: `
+    <h2>Componente Exemplo</h2>
+    <p>Valor recebido: {{ valor }}</p>
+  `
+})
+export class Exemplo implements OnInit, OnChanges, OnDestroy {
+
+  // https://angular.dev/guide/components/lifecycle
+
+  @Input() valor: number = 0;
+
+  constructor() {
+    console.log('1 - constructor');
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log('2 - ngOnChanges', changes);
+  }
+
+  ngOnInit(): void {
+    console.log('3 - ngOnInit');
+  }
+
+  ngOnDestroy(): void {
+    console.log('4 - ngOnDestroy');
+  }
+}
+
+//-- teste do ciclo de vida --//
+@Component({
+  selector: 'app-root',
+  template: `
+    <button (click)="alterar()">Alterar valor</button>
+    <button (click)="mostrar = !mostrar">Mostrar/Ocultar</button>
+
+    @if(mostrar) {
+      <app-exemplo [valor]="valor"></app-exemplo>
+    }
+  `
+})
+export class App {
+
+  valor = 1;
+  mostrar = true;
+
+  alterar() {
+    this.valor++;
+  }
+}

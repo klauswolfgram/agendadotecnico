@@ -1,0 +1,43 @@
+// Interface define o "formato" de um objeto
+interface Aluno {
+  id: number;
+  nome: string;
+  nota: number;
+}
+
+// Classe que manipula alunos
+class Turma {
+  private alunos: Array<Aluno> = [];
+
+  // Adiciona aluno
+  adicionar(aluno: Aluno): void {
+    const alunos: Array<Aluno> = [];
+    const nome: string = aluno.nome;
+    alunos.push(aluno);
+    this.alunos.push(aluno);
+  }
+
+  // Lista alunos
+  listar(): void {
+    this.alunos.forEach(a => {
+      console.log(`ID: ${a.id} | Nome: ${a.nome} | Nota: ${a.nota}`);
+    });
+  }
+
+  // Calcula média
+  calcularMedia(): any {
+    const total = this.alunos.reduce((soma, a) => soma + a.nota, 0);
+    return this.alunos.length ? total / this.alunos.length : 0;
+  }
+}
+
+// Uso do sistema
+const turma = new Turma();
+
+turma.adicionar({ id: 1, nome: "Ana", nota:8 });
+turma.adicionar({ id: 2, nome: "Carlos", nota: 6 });
+turma.adicionar({ id: 3, nome: "Maria", nota: 9 });
+
+turma.listar();
+
+console.log("Média da turma:", turma.calcularMedia());

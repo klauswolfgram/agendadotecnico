@@ -1,0 +1,44 @@
+interface Usuario {
+  id: number;
+  nome: string;
+}
+
+// https://www.youtube.com/@KlausWolfgram/videos
+// https://www.youtube.com/watch?v=TqB83Gb4Hcs&t=12s
+// https://www.youtube.com/watch?v=aVkPd4CMUg8&t=664s
+
+// Função que retorna uma Promise
+function buscarUsuario(id: number): Promise<Usuario> {
+  return new Promise((resolve, reject) => {
+    console.log("Buscando usuário...");
+
+    setTimeout(() => {
+      if (id === 1) {
+        resolve({ id: 1, nome: "João" });
+      } else {
+        reject("Usuário não encontrado");
+      }
+    }, 2000);
+  });
+}
+
+//--consumindo --//
+buscarUsuario(1)
+  .then(usuario => {
+    console.log("Sucesso:", usuario);
+  })
+  .catch(erro => {
+    console.log("Erro:", erro);
+  });
+
+//-- async await --//
+async function executar() {
+  try {
+    const usuario = await buscarUsuario(1);
+    console.log("Sucesso:", usuario);
+  } catch (erro) {
+    console.log("Erro:", erro);
+  }
+}
+
+executar();  

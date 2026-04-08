@@ -1,0 +1,17 @@
+<div class="container">
+    
+    <div class="login-area">
+        
+        <div>
+            <po-info p-label="Bem Vindo" class="po-lg-12" />
+        </div>
+
+        <form [formGroup]="form" class="form-login">
+            <po-login formControlName="username" class="po-lg-12" />
+            <po-password formControlName="password" class="po-lg-12" />
+            <po-button [p-disabled]="form.invalid" p-label="Confirmar" class="po-lg-12" (p-click)="submit()"/>
+        </form>
+
+    </div>
+
+</div>

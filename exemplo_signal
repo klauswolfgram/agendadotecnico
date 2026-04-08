@@ -1,0 +1,19 @@
+import { signal, computed, effect } from "@angular/core";
+
+// Estado (signal)
+const contador = signal(0);
+
+// Valor derivado (computed)
+const dobro = computed(() => contador() * 2);
+
+// Efeito colateral (effect)
+effect(() => {
+  console.log("Contador mudou:", contador());
+  console.log("Dobro atualizado:", dobro());
+});
+
+//-- alterando o valor do signal --//
+contador.set(1);
+contador.set(2);
+contador.update(valor => valor + 1);
+
