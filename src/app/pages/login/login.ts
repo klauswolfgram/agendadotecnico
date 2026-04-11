@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PoButtonModule, PoFieldModule, PoInfoModule } from '@po-ui/ng-components';
 import { AuthService } from '../../core/services/auth-service';
 import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -16,6 +17,7 @@ export class Login implements OnDestroy {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private sub = new Subscription();
+  private router = inject(Router);
 
   public form = this.fb.group({
     username: ['',[Validators.required,Validators.minLength(3)]],
@@ -35,9 +37,7 @@ export class Login implements OnDestroy {
     const username: string = this.form.value.username ?? '';
     const password: string = this.form.value.password ?? '';
 
-    console.log(`usernamen: ${username} password: ${password}`);
-
-    this.sub.add(this.authService.createSection(username,password).subscribe());
+    this.sub.add(this.authService.createSection(username,password).subscribe({next: () => this.router.navigate([''])}));
   }
 
 }

@@ -36,8 +36,6 @@ const init = async () => {
   
   const section: Section = await storageService.get(environment.STORAGE_KEY_SECTION) ?? new Section();
 
-  console.log('section offline',section);
-
   authService.setSection(section);
 
 }
