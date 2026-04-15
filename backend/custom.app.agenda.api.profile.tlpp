@@ -13,5 +13,96 @@ namespace custom.app.agenda.api.profile
     @get(endpoint = '/custom/app/agenda/profile',;
          description = "Endpoint para consulta de dados de profile dos usuários com acesso ao app de agenda do técnico.")
 Function U_GET()
+    
+    Local err       as Object
+    Local cMsgErr   as Character
+    Local cBody     as Character 
+    Local jBody     as Json
+    Local jHeader   as Json
+    Local jQuery    as Json
+    Local jPath     as Json
+    Local jResp     as Json
+    Local cResp     as Character
+
+    Local jTecnico  as Json
+
+    Local cUserId   as Character
+
+    try
+
+        err     := errorClass():new()
+
+        cBody   := oRest:getBodyRequest()
+        jBody   := jsonObject():new()
+        jBody:fromJson(cBody)
+
+        jHeader := oRest:getHeaderRequest()
+        jQuery  := oRest:getQueryRequest()
+        jPath   := oRest:getPathParamsRequest()
+
+        cUserId := jQuery['userid']
+
+        IF empty(cUserId)
+            err:description := 'Id de usuario nao informado'
+            throw err
+        EndIF
+
+        AA1->(dbSetOrder(retOrder('AA1','AA1_FILIAL+AA1_CODUSR')),dbSeek(xFilial('AA1')+cUserId))
+
+        IF !AA1->(found())
+            err:description := 'Acesso nao permitido'
+            throw err
+        EndIF        
+   
+        jTecnico                  := jsonObject():new()   
+        jTecnico['codtec'       ] := AA1->(alltrim(AA1_CODTEC))
+        jTecnico['nome'         ] := AA1->(alltrim(AA1_NOMTEC))
+        jTecnico['funcao'       ] := AA1->(alltrim(AA1_FUNCAO))
+        jTecnico['desc_funcao'  ] := ''
+        jTecnico['equipe'       ] := ''
+        jTecnico['desc_equipe'  ] := ''
+
+        IF !empty(AA1->AA1_FUNCAO) .and. SRJ->(dbSetOrder(1),dbSeek(xFilial('SRJ')+AA1->AA1_FUNCAO))
+            jTecnico['desc_funcao'] := SRJ->(alltrim(RJ_DESC))
+        EndIF
+
+        IF AAY->(dbSetOrder(RetOrder('AAY','AAY_FILIAL+AAY_CODTEC')),dbSeek(xFilial('AAY')+AA1->AA1_CODTEC))
+            IF AAX->(dbSetOrder(1),dbSeek(xFilial('AAX')+AAY->AAY_CODEQU))
+                jTecnico['equipe'     ] := AAX->AAX_CODEQU
+                jTecnico['desc_equipe'] := AAX->(alltrim(AAX_NOME))
+            EndIF
+        EndIF
+
+        jResp              := jsonObject():new()
+        jResp['status'   ] := 'success'
+        jResp['message'  ] := ''
+        jResp['data'     ] := jTecnico 
+
+        cResp              := jResp:toJson()
+
+        oRest:setResponse(cResp)
+
+    catch e
+
+        IF !empty(e:description)
+            
+            cMsgErr := alltrim(e:description)
+
+            IF !empty(e:errorstack)
+                cMsgErr += CRLF + LEFT(e:errorstack,500)
+            EndIF
+
+        EndIF
+
+        jResp            := jsonObject():new()
+        jResp['status' ] := 'error'
+        jResp['message'] := cMsgErr
+        jResp['data'   ] := ''
+
+        oRest:setFault(jResp:tojson())
+
+    finally
+
+    endtry
 
 Return .T.

@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../environments/environment';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { Section } from '../models/section';
+import { BehaviorSubject, finalize, from, Observable, switchMap, tap, map } from 'rxjs';
+import { RetTecnico, Section, Tecnico } from '../models/section';
 import { StorageService } from './storage-service';
 import { LoadingService } from './loading-service';
 
@@ -32,6 +32,55 @@ export class AuthService {
 
     const url: string = `${this.urlAuth}?grant_type=password&username=${username}&password=${password}`;
 
+    return this.http.post<Section>(url,'').pipe(
+      tap({
+        subscribe: () => this.loadingService.isHidden.set(false),
+        error: (err) => console.log(err),
+        next: (section) => {
+          const now: number = Date.now();
+          const newSection: Section = {
+            ...section, 
+            username,
+            expires_token: now + (section.expires_in * 1000), 
+            expires_refresh_token: now + (section.expires_in * 1000 * 24)
+          };
+          this.section.next(newSection);
+        }
+       }),
+      switchMap((_) => {
+        const url: string = `${environment.url_base}api/framework/v1/users?username=${username}`;
+        return this.http.get<any>(url);
+      }),
+      tap(RetUser => {
+        const userid: any = RetUser.items[0].id;
+        const newSection: Section = {...this.section.value,userid};
+        this.section.next(newSection);
+      }),
+      switchMap((_) => {
+        const url: string = `${environment.url_base}custom/app/agenda/profile?userid=${this.section.value.userid}`;
+        return this.http.get<RetTecnico>(url);
+      }),
+      tap({
+        next: (value) => {
+          if(value.status === "success") {
+            const tecnico: Tecnico = value.data;
+            const newSection: Section = {...this.section.value, tecnico};
+            this.section.next(newSection);
+          }else{
+            console.log(value.message);
+            throw new Error(value.message);
+          }
+        }
+      }),
+      switchMap((_) => {
+        const newSection: Section = this.section.value;
+        return from(this.storageService.set<Section>(environment.STORAGE_KEY_SECTION,newSection)).
+        pipe(map(() => newSection));
+      }),
+      finalize(() => this.loadingService.isHidden.set(true)),
+    );
+
+    /*/
     return this.http.post<Section>(url,null).pipe(tap({
       subscribe: () => this.loadingService.isHidden.set(false),
       next: async (section) => {
@@ -50,6 +99,7 @@ export class AuthService {
       error: (err) => { console.log('erro',err)},
       finalize: () => this.loadingService.isHidden.set(true)
     }));
+    /*/
   }
 
   public refreshSection = (): Observable<Section> => {
