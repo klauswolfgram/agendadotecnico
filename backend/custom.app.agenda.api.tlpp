@@ -1,0 +1,15 @@
+#include 'totvs.ch'
+#include 'fwmvcdef.ch'
+
+#include 'tlpp-core.th'
+
+namespace custom.app.agenda.api
+
+/*/{Protheus.doc} U_GET
+    (long_description)
+    @type  Function
+    /*/
+    
+Function U_GET()
+    
+Return 

@@ -1,0 +1,17 @@
+#include 'totvs.ch'
+#include 'fwmvcdef.ch'
+
+#include 'tlpp-core.th'
+
+namespace custom.app.agenda.api.tabelas
+
+/*/{Protheus.doc} U_GET
+    Funcao de usuario para consulta de dados de cadastros 
+    @type  Function
+    @author Klaus Wolfgram
+    @version 1.0
+    /*/
+    
+Function U_GET()
+    
+Return 

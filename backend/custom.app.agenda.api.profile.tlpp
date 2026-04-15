@@ -1,0 +1,17 @@
+#include 'totvs.ch'
+#include 'tlpp-core.th'
+
+namespace custom.app.agenda.api.profile
+
+/*/{Protheus.doc} U_GET
+    Retorna os dados do profile do usuário
+    @type  Function
+    @author Klaus Wolfgram
+    @since 13/04/2026
+    /*/
+
+    @get(endpoint = '/custom/app/agenda/profile',;
+         description = "Endpoint para consulta de dados de profile dos usuários com acesso ao app de agenda do técnico.")
+Function U_GET()
+
+Return .T.

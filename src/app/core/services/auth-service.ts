@@ -26,12 +26,12 @@ export class AuthService {
   }
 
   public setSection = (section: Section) => this.section.next(section);
-  public getSection = (): Observable <Section> => this.section.asObservable();
+  public getSection = (): Observable<Section> => this.section.asObservable();
 
   public createSection = (username: string, password: string): Observable<Section> => {
-    
+
     const url: string = `${this.urlAuth}?grant_type=password&username=${username}&password=${password}`;
-    
+
     return this.http.post<Section>(url,null).pipe(tap({
       subscribe: () => this.loadingService.isHidden.set(false),
       next: async (section) => {
@@ -52,20 +52,21 @@ export class AuthService {
     }));
   }
 
-  public refreshSection = ():Observable<Section> => {
+  public refreshSection = (): Observable<Section> => {
 
     const url: string = `${this.urlAuth}?grant_type=refresh_token&refresh_token=${this.section.value.refresh_token}`;
-    return this.http.post<Section>(url,null).pipe(tap({
+    return this.http.post<Section>(url, null).pipe(tap({
       next: section => {
-          const now: number = Date.now();
-          const newSection: Section = {
-            ...section,
-            expires_token: now + (section.expires_in * 1000), 
-            expires_refresh_token: now + (section.expires_in * 1000 * 24)};
-          this.section.next(newSection);
-          this.storageService.set<Section>(environment.STORAGE_KEY_SECTION,newSection).then().catch(e => console.log('erro refresh',e));
+        const now: number = Date.now();
+        const newSection: Section = {
+          ...section,
+          expires_token: now + (section.expires_in * 1000),
+          expires_refresh_token: now + (section.expires_in * 1000 * 24)
+        };
+        this.section.next(newSection);
+        this.storageService.set<Section>(environment.STORAGE_KEY_SECTION, newSection).then().catch(e => console.log('erro refresh', e));
       }
     }))
   }
-  
+
 }
