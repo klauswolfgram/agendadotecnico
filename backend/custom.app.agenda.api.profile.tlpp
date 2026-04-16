@@ -88,9 +88,9 @@ Function U_GET()
             
             cMsgErr := alltrim(e:description)
 
-            IF !empty(e:errorstack)
-                cMsgErr += CRLF + LEFT(e:errorstack,500)
-            EndIF
+            //IF !empty(e:errorstack)
+            //    cMsgErr += CRLF + LEFT(e:errorstack,500)
+            //EndIF
 
         EndIF
 

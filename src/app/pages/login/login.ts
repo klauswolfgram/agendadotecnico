@@ -1,6 +1,6 @@
 import { Component, inject, OnDestroy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { PoButtonModule, PoFieldModule, PoInfoModule } from '@po-ui/ng-components';
+import { PoButtonModule, PoFieldModule, PoInfoModule, PoNotificationService } from '@po-ui/ng-components';
 import { AuthService } from '../../core/services/auth-service';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
@@ -16,6 +16,7 @@ export class Login implements OnDestroy {
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private notify = inject(PoNotificationService);
   private sub = new Subscription();
   private router = inject(Router);
 
@@ -37,7 +38,13 @@ export class Login implements OnDestroy {
     const username: string = this.form.value.username ?? '';
     const password: string = this.form.value.password ?? '';
 
-    this.sub.add(this.authService.createSection(username,password).subscribe({next: () => this.router.navigate([''])}));
+    this.sub.add(this.authService.createSection(username,password).subscribe({
+      next: () => {
+        this.notify.success({duration: 1500, message: 'Login bem sucedido!'})
+        this.router.navigate(['']);
+      },
+      error: (e) => this.notify.error(e.error.message),
+    }));
   }
 
 }

@@ -16,11 +16,11 @@ export class Tecnico {
     funcao: string = ''
     desc_funcao: string = ''
     equipe: string = ''
-    desc_equippe: string = ''
+    desc_equipe: string = ''
 }
 
-export class RetTecnico {
-    status: string = '';
-    message: string = '';
+export class RespTecnico {
+    status: string = ''
+    message: string = ''
     data: Tecnico = new Tecnico
 }
