@@ -1,1 +1,47 @@
 /* You can add global styles to this file, and also import other style files */
+/* You can add global styles to this file, and also import other style files */
+/* <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> */
+/* <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet"> */ 
+  
+:root {
+
+  /* 🎯 CORE (Marca) */
+  --color-primary: #2F4F78;
+  --color-secondary: #2E5FA7;
+  --color-accent: #00A7D8;
+  --color-success: #2FA84F;
+
+  /* 🎯 BACKGROUND */
+  --color-background: #dce2ec;
+  --color-surface: #FFFFFF;
+
+  /* 🎯 TEXTOS */
+  --color-text-title: #FFFFFF;
+  --color-text-sub-title: #4B5563;
+  --color-text-primary: #1F2937;
+  --color-text-secondary: #4B5563;
+  --color-text-muted: #6B7280;
+
+  /* 🎯 BORDAS */
+  --color-border: #D1D5DB;
+
+  /* 🎯 ESTADOS */
+  --color-hover: #00A7D8;
+  --color-active: #2E5FA7;
+
+  /* 🎯 FEEDBACK */
+  --color-error: #EF4444;
+  --color-warning: #F59E0B;
+  --color-info: #00A7D8;
+
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+}
+
+h1, h2, h3, .app-title {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}

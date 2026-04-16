@@ -4,10 +4,13 @@ import { PoButtonModule, PoFieldModule, PoInfoModule, PoNotificationService } fr
 import { AuthService } from '../../core/services/auth-service';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
+import { Toolbar } from '../../shared/toolbar/toolbar';
+import { Footer } from '../../shared/footer/footer';
+import { ToolbarService } from '../../core/services/toolbar-service';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule,PoFieldModule,PoButtonModule,PoInfoModule],
+  imports: [ReactiveFormsModule,PoFieldModule,PoButtonModule,PoInfoModule,Toolbar,Footer],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })
@@ -19,6 +22,7 @@ export class Login implements OnDestroy {
   private notify = inject(PoNotificationService);
   private sub = new Subscription();
   private router = inject(Router);
+  private toolbarService = inject(ToolbarService);
 
   public form = this.fb.group({
     username: ['',[Validators.required,Validators.minLength(3)]],
@@ -26,7 +30,7 @@ export class Login implements OnDestroy {
   });
 
   constructor() {
-
+    this.toolbarService.isLoggedOn.set(false);
   }
 
   ngOnDestroy(): void {

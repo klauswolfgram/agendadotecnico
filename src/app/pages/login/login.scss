@@ -1,13 +1,22 @@
 .container {
-    min-height: 100vh;
-    display: grid;
-    grid-template-columns: 1fr;
-}
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+
+    app-toolbar,
+    app-footer {
+        flex: 0 0 auto;
+        z-index: 100;
+    }
 
 .login-area {
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
     justify-content: center;
     padding: 40px;
     align-items: center;
+}    
 }
+
