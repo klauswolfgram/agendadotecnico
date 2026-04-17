@@ -6,10 +6,189 @@
 namespace custom.app.agenda.api
 
 /*/{Protheus.doc} U_GET
-    (long_description)
+    Retorna a lista de agendamentos do tecnico
     @type  Function
     /*/
     
 Function U_GET()
+
+    Local err       as Object
+    Local cMsgErr   as Character
+    
+    Local jHeader   as Json
+    Local jPath     as Json
+    Local jQuery    as Json
+
+    Local jResp     as Json
+
+    Local cTecnico  as Character
+    Local aTasks    as Array
+
+    try
+        
+        err         := errorClass():new()
+        cMsgErr     := ''
+
+        jHeader     := oRest:getHeaderRequest()
+        jPath       := oRest:getPathParamsRequest()
+        jQuery      := oRest:getQueryRequest()
+
+        cTecnico    := if(empty(jQuery['tecnico']),'',jQuery['tecnico'])
+
+        IF !empty(cTecnico)
+            AA1->(dbSetOrder(1),dbSeek(xFilial('AA1')+cTecnico))
+        EndIF
+
+        aTasks      := fnGetTasks(cTecnico)
+
+        jResp                   := jsonObject():new()      
+        jResp['status'      ]   := 'success'
+        jResp['message'     ]   := ''             
+        jResp['tasks'       ]   := aTasks   
+
+        oRest:setResponse(jResp:toJson())
+
+    catch e
+
+        IF !empty(e:description)
+
+            cMsgErr := ALLTRIM(e:description)
+
+            IF !empty(e:errorstack)
+                cMsgErr += CRLF + CRLF + "ErrorStack -->> " + LEFT(e:errorstack,500)
+            EndIF
+
+        EndIF
+
+        jResp                   := jsonObject():new()
+        jResp['status'      ]   := 'error'
+        jResp['message'     ]   := cMsgErr          
+        jResp['tasks'       ]   := array(0)  
+
+        oRest:setFault(jResp:toJson())
+
+    finally
+
+    endtry
     
 Return 
+
+/*/{Protheus.doc} fnGetTasks
+    Retorna a lista de agendamentos de acordo com o tipo
+    @type  Static Function
+    @author Klaus Wolfgram
+    @since 16/04/2026
+    @version 1.0
+/*/
+
+Static Function fnGetTasks(cTecnico as Character) as Array
+
+    Local aTasks                as Array
+    Local jAB7                  as Json
+    Local jSA1                  as Json
+    Local cSQL                  as Character
+    Local cAliasSQL             as Character
+    Local aRecAB7               as Array
+
+    aTasks                      := array(0)
+    aRecAB7                     := array(0)
+
+    cSQL                        := "SELECT AB6.R_E_C_N_O_ RECAB6,AB7.R_E_C_N_O_ RECAB7"
+    cSQL                        += CRLF + "FROM " + RETSQLNAME("AB7") + " AB7"
+    cSQL                        += CRLF + "JOIN " + RETSQLNAME("AB6") + " AB6 ON AB6.D_E_L_E_T_ = ' ' AND AB6_FILIAL = AB7_FILIAL AND AB6_NUMOS = AB7_NUMOS"
+    cSQL                        += CRLF + "WHERE AB7.D_E_L_E_T_ = ' ' "
+    cSQL                        += CRLF + "GROUP BY AB6.R_E_C_N_O_, AB7.R_E_C_N_O_"
+    cSQL                        += CRLF + "ORDER BY AB6.R_E_C_N_O_ DESC, AB7.R_E_C_N_O_ DESC"
+
+    cAliasSQL                   := mpSysOpenQuery(cSQL)
+
+    While !(cAliasSQL)->(eof())
+
+        AB6->(dbSetOrder(1),dbGoTo((cAliasSQL)->RECAB6))
+        AB7->(dbSetOrder(1),dbGoTo((cAliasSQL)->RECAB7))
+        SA1->(dbSetOrder(1),dbSeek(xFilial('SA1')+AB6->(AB6_CODCLI+AB6_LOJA)))
+        SB1->(dbSetOrder(1),dbSeek(xFilial('SB1')+AB7->AB7_CODPRO))
+        AB3->(dbSetOrder(1),dbSeek(AB7->(AB7_FILIAL+LEFT(AB7_NUMORC,TAMSX3('AB3_NUMORC')[1]))))
+        AB4->(dbSetOrder(1),dbSeek(AB7->(AB7_FILIAL+AB7_NUMORC)))
+        AB8->(dbSetOrder(1),dbSeek(AB7->(AB7_FILIAL+AB7_NUMOS+AB7_ITEM)))
+        AB5->(dbSetOrder(1),dbSeek(AB7->(AB7_FILIAL+AB7_NUMORC)+AB8->AB8_SUBITE))
+        AAG->(dbSetOrder(1),dbSeek(xFilial('AAG')+AB7->AB7_CODPRB))
+
+        IF aScan(aRecAB7,(cAliasSQL)->RECAB7) > 0
+            (cAliasSQL)->(dbSkip())
+            Loop
+        EndIF    
+
+        aadd(aRecAB7,(cAliasSQL)->RECAB7)        
+
+        cDataEnc := ''
+
+        IF AB8->(found())
+            IF !empty(AB8->AB8_NUMPV)
+                IF SC5->(dbSetOrder(1),dbSeek(AB8->(AB8_FILIAL+LEFT(AB8_NUMPV,6))))
+                    cDataEnc            := SC5->(dtoC(C5_EMISSAO))
+                EndIF
+            EndIF
+        EndIF
+
+        cStatus                     := ''
+        cStatusType                 := ''
+        cStatusIcon                 := ''
+
+        IF AB7->AB7_TIPO == '1'
+            cStatus                 := 'Agendada'
+            cStatusType             := 'danger'
+            cStatusIcon             := 'an an-clock'
+        ElseIF AB7->AB7_TIPO == '2'
+            cStatus                 := 'Pedido Gerado'
+            cStatusType             := 'warning'
+            cStatusIcon             := 'an an-play-circle'
+        ElseIF AB7->AB7_TIPO == '3'
+            cStatus                 := 'Em atendimento'
+            cStatusType             := 'warning'
+            cStatusIcon             := 'an an-check-circle'
+        ElseIF AB7->AB7_TIPO == '4'
+            cStatus                 := 'Atendida'
+            cStatusType             := 'success'
+            cStatusIcon             := 'an an-play-circle'     
+        ElseIF AB7->AB7_TIPO == '5'
+            cStatus                 := 'encerrado'
+            cStatusType             := 'success'
+            cStatusIcon             := 'an an-play-circle'                             
+        EndIF     
+
+        jSA1                        := jsonObject():new()
+        jSA1['codigo'           ]   := SA1->(A1_COD+A1_LOJA)
+        jSA1['cgc'              ]   := SA1->A1_CGC
+        jSA1['cep'              ]   := SA1->A1_CEP        
+        jSA1['nome'             ]   := SA1->(ALLTRIM(A1_NOME    ))        
+        jSA1['endereco'         ]   := SA1->(ALLTRIM(A1_END     ))
+        jSA1['bairro'           ]   := SA1->(ALLTRIM(A1_BAIRRO  ))
+        jSA1['cidade'           ]   := SA1->(ALLTRIM(A1_MUN     ))
+        jSA1['estado'           ]   := SA1->(ALLTRIM(A1_EST     ))
+        jSA1['telefone'         ]   := SA1->(ALLTRIM(A1_TEL     ))
+        jSA1['email'            ]   := SA1->(ALLTRIM(A1_EMAIL   ))
+
+        jAB7                        := jsonObject():new()
+        jAB7['filial'           ]   := AB6->AB6_FILIAL
+        jAB7['id'               ]   := AB7->(cValToChar(recno()))
+        jAB7['os'               ]   := AB7->(AB7_NUMOS + '/' + AB7_ITEM)
+        jAB7['cliente'          ]   := SA1->(ALLTRIM(A1_NREDUZ))
+        jAB7['equipamento'      ]   := SB1->(ALLTRIM(B1_DESC))
+        jAB7['data'             ]   := AB6->(DTOC(AB6_EMISSA))
+        jAB7['ocorrencia'       ]   := AAG->(ALLTRIM(AAG_DESCRI))
+        jAB7['situacao'         ]   := if(empty(cDataEnc),'pendente','encerrado')
+        jAB7['status'           ]   := cStatus
+        jAB7['statusType'       ]   := cStatusType
+        jAB7['texto_ocorrencia' ]   := ALLTRIM(MSMM(AB7->AB7_MEMO1))
+        jAB7['dadoscliente'     ]   := jSA1
+
+        aadd(aTasks,jAB7)
+
+        (cAliasSQL)->(dbSkip())
+
+    Enddo
+
+    (cAliasSQL)->(dbCloseArea())
+
+Return aTasks
