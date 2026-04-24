@@ -15,17 +15,45 @@
            
             @if(toolbarService.isShowBtnInstall()){
                 <button class="icon-button"><span class="material-icons">download</span></button>
-            } 
+            }    
 
-            @if(toolbarService.isWifiOn()){
+            @if(networkService.onLine$ | async) {
                 <button class="icon-button"><span class="material-icons">wifi</span></button>
-            }@else {
+            } @else {
                 <button class="icon-button"><span class="material-icons">wifi_off</span></button>
             }
-            
+
             @if(toolbarService.isLoggedOn()){
                 <button class="icon-button"><span class="material-icons">notifications</span></button>
-                <button class="icon-button"><span class="material-icons">account_circle</span></button>
+                <button class="icon-button" (click)="toggleProfileMenu($event)"><span class="material-icons">account_circle</span></button>
+
+                <div class="profile-wrapper">
+
+                    @if(showProfileMenu()) {
+                        <div class="profile-menu">
+                            
+                            <div class="profile-info">
+                                {{authService.current.tecnico.nome}}
+                                <br />
+                                <span style="font-size: small;"> Versão: {{version()}}</span>
+                            </div>
+
+                            <div class="divider"></div>
+
+                            <button class="menu-item">
+                                <span class="menu-icon material-icons">refresh</span> Sincronizar
+                            </button>
+
+                            <div class="divider"></div>
+
+                            <button class="menu-item logout">
+                                <span class="menu-icon material-icons">logout</span>Sair
+                            </button>
+                        </div>
+                    }
+
+                </div>
+
             }
 
         </div>
