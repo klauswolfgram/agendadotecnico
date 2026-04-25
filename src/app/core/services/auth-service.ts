@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../environments/environment';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, finalize, from, map, Observable, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, finalize, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { RespTecnico, Section, Tecnico} from '../models/section';
 import { StorageService } from './storage-service';
 import { LoadingService } from './loading-service';
@@ -29,6 +29,19 @@ export class AuthService {
   public getSection = (): Observable<Section> => this.section.asObservable();
 
   public createSection = (username: string, password: string): Observable<Section> => {
+
+    if(username.trim().toLowerCase() === 'demo') {
+      let section: Section = new Section();
+      section.expires_in = 999999;
+      section.expires_token = Date.now() + (section.expires_in * 1000);
+      section.expires_refresh_token = Date.now() + (section.expires_in * 1000 * 24);
+      section.username = 'demonstracao';
+      section.userid = 'demo';
+      section.tecnico.nome = 'Demonstração';
+
+      this.section.next(section);
+      return of(section);
+    }
 
     const url: string = `${this.urlAuth}?grant_type=password&username=${username}&password=${password}`;
 
