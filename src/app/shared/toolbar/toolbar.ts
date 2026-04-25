@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { NetworkService } from '../../core/services/network-service';
 import { AuthService } from '../../core/services/auth-service';
 import { environment } from '../../core/environments/environment';
+import { InstallService } from '../../core/services/install-service';
 
 @Component({
   selector: 'app-toolbar',
@@ -13,6 +14,7 @@ import { environment } from '../../core/environments/environment';
 })
 export class Toolbar {
 
+  public installService = inject(InstallService);
   public toolbarService = inject(ToolbarService);
   public networkService = inject(NetworkService);
   public authService = inject(AuthService);
