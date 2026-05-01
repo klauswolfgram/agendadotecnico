@@ -44,7 +44,7 @@ Function U_GET()
         jResp                   := jsonObject():new()      
         jResp['status'      ]   := 'success'
         jResp['message'     ]   := ''             
-        jResp['tasks'       ]   := aTasks   
+        jResp['data'        ]   := aTasks   
 
         oRest:setResponse(jResp:toJson())
 
@@ -63,7 +63,7 @@ Function U_GET()
         jResp                   := jsonObject():new()
         jResp['status'      ]   := 'error'
         jResp['message'     ]   := cMsgErr          
-        jResp['tasks'       ]   := array(0)  
+        jResp['data'        ]   := array(0)  
 
         oRest:setFault(jResp:toJson())
 
