@@ -9,7 +9,7 @@ namespace custom.app.agenda.api
     Retorna a lista de agendamentos do tecnico
     @type  Function
     /*/
-    
+    @get('/custom/app/agenda/agendamentos')
 Function U_GET()
 
     Local err       as Object
