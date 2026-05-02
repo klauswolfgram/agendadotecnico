@@ -1,1 +1,27 @@
-<p>agendamentos works!</p>
+<nav class="tabs">
+    <button [class.active]="aba() === 'pendente'" (click)="setAba('pendente')">Pendentes</button>
+    <button [class.active]="aba() === 'encerrado'" (click)="setAba('encerrado')">Encerrados</button>
+</nav>
+
+<div class="agenda-container">
+
+    @if(agendamentos().length === 0) {
+    <div class="empty">Nenhum agendamento encontrado.</div>
+    }
+
+    @for (item of agendamentos(); track item.id) {
+        <div class="agenda-item" (click)="goToTask(item.id)">
+            <div class="avatar">{{getIniciais(item.cliente)}}</div>
+            <div class="content">
+                <div class="os">OS {{item.os}}</div>
+                <div class="cliente">{{item.cliente}}</div>
+            </div>
+            <div class="agenda-info">
+                <div class="status">{{item.status}}</div>
+                <div class="data">{{item.data}}</div>
+            </div>
+        </div>
+    }
+
+
+</div>

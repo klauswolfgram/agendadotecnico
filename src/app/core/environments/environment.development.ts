@@ -5,5 +5,6 @@ export const environment = {
     tenantId: '99,01',
     STORAGE_NAME: 'agenda-do-tecnico',
     STORAGE_STORENAME: 'agenda-do-tecnico-store',
-    STORAGE_KEY_SECTION: 'section'
+    STORAGE_KEY_SECTION: 'section',
+    STORAGE_KEY_AGENDA: 'agenda',
 };
