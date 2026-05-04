@@ -32,4 +32,6 @@ export class Toolbar {
     if(this.showProfileMenu()) this.showProfileMenu.set(false);
   }
 
+  public onClickBack = () => window.history.back();
+
 }

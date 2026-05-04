@@ -3,6 +3,7 @@ import { ErpService } from '../../../core/services/erp-service';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { Agendamento } from '../../../core/models/agenda';
+import { ToolbarService } from '../../../core/services/toolbar-service';
 
 @Component({
   selector: 'app-agendamentos',
@@ -15,6 +16,7 @@ export class Agendamentos implements OnInit, OnDestroy {
   private erpService = inject(ErpService);
   private router = inject(Router);
   private sub = new Subscription();
+  private toolbarService = inject(ToolbarService);
 
   public aba = signal<'pendente' | 'encerrado'>('pendente');
   public agendamentosOriginais = signal<Agendamento[]>([]);
@@ -25,6 +27,8 @@ export class Agendamentos implements OnInit, OnDestroy {
   })
 
   constructor() {
+    this.toolbarService.isShowBtnBack.set(false);
+    this.toolbarService.title.set('Agendamentos');
     this.sub.add(this.erpService.getAgenda().subscribe(value => this.agendamentosOriginais.set(value.data)));
   }
 

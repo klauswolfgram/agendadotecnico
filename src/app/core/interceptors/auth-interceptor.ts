@@ -11,7 +11,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const section: Section = authService.current;
 
   //-- requisicao de geracao de token
-  if(section?.access_token.length <= 0) return next(req);
+  //if(section?.access_token.length <= 0) return next(req);
+  if(req.url.includes('oauth2/v1/token')) return next(req);
 
   //-- requisicao com token valido
   if(section.expires_token > Date.now()) {

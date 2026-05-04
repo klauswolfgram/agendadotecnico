@@ -3,7 +3,7 @@
         <div class="area-left">
             
             @if(toolbarService.isShowBtnBack()) {
-                <button class="icon-button">
+                <button class="icon-button" (click)="onClickBack()">
                     <span class="material-icons">arrow_back</span>
                 </button>
             }

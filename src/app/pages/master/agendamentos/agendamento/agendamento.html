@@ -1,1 +1,86 @@
-<p>agendamento works!</p>
+<div class="detalhe-container">
+    @if(agendamento(); as item) {
+        
+        <div class="header">
+            <div class="header-info">
+                <div class="os">OS {{ item.os }}</div>
+                <div class="status">{{ item.status }}</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="linha">
+                <span class="label">Cliente:</span>
+                <span class="valor">{{ item.dadoscliente.nome }}</span>
+            </div>
+
+            <div class="linha">
+                <span class="label">Equipamento:</span>
+                <span class="valor">{{ item.equipamento }}</span>
+            </div>
+
+            <div class="linha">
+                <span class="label">Data:</span>
+                <span class="valor">{{ item.data }}</span>
+            </div>
+
+            <div class="linha">
+                <span class="label">Situação:</span>
+                <span class="valor">{{ item.situacao }}</span>
+            </div>
+
+            <div class="linha">
+                <span class="label">Ocorrência:</span>
+                <span class="valor">{{ item.texto_ocorrencia }}</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="linha">
+                <span class="label">Telefone:</span>
+                <span class="valor">{{ item.dadoscliente.telefone }}</span>
+            </div>
+
+            <div class="linha">
+                <span class="label">Endereço:</span>
+                <span class="valor">{{ item.dadoscliente.endereco }}</span>
+            </div>
+
+            <div class="linha">
+                <span class="label">Cep:</span>
+                <span class="valor">{{ item.dadoscliente.cep }}</span>
+            </div>
+
+            <div class="linha">
+                <span class="label">Bairro:</span>
+                <span class="valor">{{ item.dadoscliente.bairro }}</span>
+            </div>
+
+            <div class="linha">
+                <span class="label">Cidade:</span>
+                <span class="valor">{{ item.dadoscliente.cidade }}/{{ item.dadoscliente.estado }}</span>
+            </div>
+        </div>
+
+        <div class="fab-container">
+
+            <button class="fab atendimento" (click)="goToAtendimentos()">
+                <span class="material-icons">note_alt</span>
+            </button>
+
+            <button class="fab image" (click)="goToGallery()">
+                <span class="material-icons">image</span>
+            </button>
+            
+            <button class="fab mapa" (click)="openMap()">
+                <span class="material-icons">map</span>
+            </button>
+
+            <button class="fab telefone" (click)="callToCustomer()">
+                <span class="material-icons">call</span>
+            </button>
+        </div>
+    }@else {
+        <div class="empty">Nenhum agendamento encontrado.</div>
+    }
+</div>

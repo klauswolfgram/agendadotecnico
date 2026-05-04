@@ -9,7 +9,7 @@ export class Agendamento {
     id: string = '';
     os: string = '';
     cliente: string = '';
-    dadoscliente: string = '';
+    dadoscliente: Cliente = new Cliente();
     equipamento: string = '';
     data: string = '';
     ocorrencia: string = '';
