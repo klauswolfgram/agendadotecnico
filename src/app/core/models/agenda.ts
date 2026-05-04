@@ -1,7 +1,7 @@
 export class Agenda {
     status: string = '';
     message: string = '';
-    data: any[] = [];
+    data: Agendamento[] = [];
 }
 
 export class Agendamento {

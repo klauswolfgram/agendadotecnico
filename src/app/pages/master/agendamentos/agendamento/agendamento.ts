@@ -25,6 +25,7 @@ export class Agendamento implements OnDestroy {
   constructor() {
     this.sub.add(this.erpService.getAgenda().subscribe(value => {
       const agendamento = value.data.find(item => item.id === this.id);
+      if(!agendamento) return;
       this.agendamento.set(agendamento);
       this.toolbarService.title.set(`OS ${agendamento.os}`);
     }))
