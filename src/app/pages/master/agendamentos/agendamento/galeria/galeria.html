@@ -1,33 +1,64 @@
 <div class="gallery-container">
     @if(fotos()?.length === 0) {
-        <div class="empty">Nenhuma foto encontrada!</div>
+    <div class="empty">Nenhuma foto encontrada!</div>
     }@else {
-        <div class="grid">
-            @for(foto of fotos(); track foto.id) {
-                <div class="img-wrapper">
-                    <img [src]="'data:image/jpeg;base64,' + foto.arq64" class="img" />
-                    <button class="btn-comment">
-                        <span class="material-icons">comment</span>
-                    </button>
-                    <button class="btn-delete">
-                        <span class="material-icons">delete</span>
-                    </button>
-                </div>
-            }
+    <div class="grid">
+        @for(foto of fotos(); track foto.id) {
+        <div class="img-wrapper">
+            <img [src]="'data:image/jpeg;base64,' + foto.arq64" class="img" (click)="verFoto(foto)"/>
+            <button class="btn-comment" (click)="openComment(foto)">
+                <span class="material-icons">comment</span>
+            </button>
+            <button class="btn-delete" (click)="deleteFoto(foto)">
+                <span class="material-icons">delete</span>
+            </button>
         </div>
+        }
+    </div>
     }
 </div>
 
 <div class="fab-container">
 
     @if(cameraService.isMobile()) {
-        <button class="fab camera" (click)="takeFoto()">
-            <span class="material-icons">photo_camera</span>
-        </button>
+    <button class="fab camera" (click)="takeFoto()">
+        <span class="material-icons">photo_camera</span>
+    </button>
     }
 
     <button class="fab galeria" (click)="selecionarGaleria()">
         <span class="material-icons">photo_library</span>
     </button>
-    
+
 </div>
+
+@if(fotoSelecionada()) {
+<div class="modal-backdrop">
+    <div class="modal">
+        <h3>Comentário</h3>
+        <textarea rows="4" [value]="comment()" (input)="comment.set($any($event.target).value)"></textarea>
+        <div class="acoes">
+            <button class="btn cancelar" (click)="closeComment()">Cancelar</button>
+            <button class="btn salvar" (click)="saveComment()">Salvar</button>
+        </div>
+    </div>
+</div>
+}
+
+@if(previewFoto()) {
+    <div class="modal-backdrop" (click)="fecharFoto()">
+        <div class="preview-modal" (click)="$event.stopPropagation()">
+
+            <button class="btn-close" (click)="fecharFoto()">
+                <span class="material-icons">close</span>
+            </button>
+
+            <img [src]="'data:image/jpeg;base64,' + previewFoto()?.arq64" class="preview-img" />
+            @if(previewFoto()?.comment) {
+                <div class="preview-comment">
+                    {{previewFoto()?.comment}}
+                </div>
+            }
+        </div>
+    </div>
+}

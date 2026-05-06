@@ -90,4 +90,51 @@ export class Galeria implements OnInit, OnDestroy {
     }
   }
 
+  public deleteFoto = async (foto: Foto) => {
+    this.dialog.confirm({
+      title: 'Deletar imagem',
+      message: 'Confirmo a deleção da imagem?',
+      confirm: async () => {
+        const all = await this.storageService.get<Foto[]>(environment.STORAGE_KEY_GALERIA) || [];
+        const index = all.findIndex(f => f.id === foto.id);
+
+        if(index >= 0) {
+          all[index].delete = true;
+          all[index].sync_delete = false;
+        }
+
+        await this.storageService.set<Foto[]>(environment.STORAGE_KEY_GALERIA, all);
+        await this.loadfotos();
+      }
+    })
+  } 
+
+  public openComment = (foto: Foto) => {
+    this.fotoSelecionada.set(foto);
+    this.comment.set(foto.comment || '');
+  }
+
+  public closeComment = () => this.fotoSelecionada.set(null);
+
+  public saveComment = async () => {
+    
+    const foto = this.fotoSelecionada();
+    if(!foto) return; 
+
+    const all = await this.storageService.get<Foto[]>(environment.STORAGE_KEY_GALERIA) || [];
+    const index = all.findIndex(f => f.id === foto.id);
+
+    if(index >= 0) all[index].comment = this.comment();
+
+    await this.storageService.set<Foto[]>(environment.STORAGE_KEY_GALERIA, all);
+
+    this.fotoSelecionada.set(null);
+
+    await this.loadfotos();    
+
+  }
+
+  public verFoto = (foto: Foto) => this.previewFoto.set(foto);
+  public fecharFoto = () => this.previewFoto.set(null);
+
 }
