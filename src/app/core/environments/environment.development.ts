@@ -7,4 +7,5 @@ export const environment = {
     STORAGE_STORENAME: 'agenda-do-tecnico-store',
     STORAGE_KEY_SECTION: 'section',
     STORAGE_KEY_AGENDA: 'agenda',
+    STORAGE_KEY_GALERIA: 'galeria',
 };
