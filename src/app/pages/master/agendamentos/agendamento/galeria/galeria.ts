@@ -8,6 +8,7 @@ import { Subscription } from 'rxjs';
 import { Foto } from '../../../../../core/models/foto';
 import { Agendamento } from '../../../../../core/models/agenda';
 import { environment } from '../../../../../core/environments/environment';
+import { ToolbarService } from '../../../../../core/services/toolbar-service';
 
 @Component({
   selector: 'app-galeria',
@@ -22,6 +23,7 @@ export class Galeria implements OnInit, OnDestroy {
   private dialog = inject(PoDialogService);
   private storageService = inject(StorageService);
   private ErpService = inject(ErpService);
+  private toolbarService = inject(ToolbarService);
   private sub = new Subscription;
 
   private id = this.route.snapshot.paramMap.get('id');
@@ -37,6 +39,8 @@ export class Galeria implements OnInit, OnDestroy {
     this.sub.add(this.ErpService.getAgenda().subscribe(value => {
       const os = value.data.find(a => a.id == this.id) ?? new Agendamento;
       this.os.set(os);
+      this.toolbarService.isShowBtnBack.set(true);
+      this.toolbarService.title.set(`OS ${os.os} - Fotos`)
     }))
   }
 
