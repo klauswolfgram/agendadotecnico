@@ -20,13 +20,13 @@ export class Galeria implements OnInit, OnDestroy {
 
   private route = inject(ActivatedRoute);
   private dialog = inject(PoDialogService);
-  private cameraService = inject(CameraService);
   private storageService = inject(StorageService);
   private ErpService = inject(ErpService);
   private sub = new Subscription;
 
   private id = this.route.snapshot.paramMap.get('id');
   
+  public cameraService = inject(CameraService);
   public os = signal<Agendamento>(new Agendamento);
   public fotos = signal<Foto[] | null>([]);
   public fotoSelecionada = signal<Foto | null>(null);
@@ -55,6 +55,39 @@ export class Galeria implements OnInit, OnDestroy {
 
     this.fotos.set(fotosOS);
 
+  }
+
+  private saveFoto = async (base64: string) => {
+    
+    const all = await this.storageService.get<Foto[]>(environment.STORAGE_KEY_GALERIA) || [];
+    const foto = new Foto;
+
+    foto.id = Date.now().toString();
+    foto.arq64 = base64;
+    foto.id_os = this.os().id;
+    foto.filial = this.os().filial;
+    foto.numero = this.os().os;
+    foto.sync = false;
+    foto.delete = false;
+    foto.sync_delete = false;
+    foto.comment = '';
+
+    all.push(foto);
+
+    await this.storageService.set<Foto[]>(environment.STORAGE_KEY_GALERIA,all);
+    await this.loadfotos();
+  }  
+
+  public takeFoto = async () => {
+    const base64 = await this.cameraService.takeFoto();
+    base64 ? await this.saveFoto(base64) : null;
+  }
+
+  public selecionarGaleria = async () => {
+    const imagens = await this.cameraService.pickFromGallery();
+    for (const img of imagens) {
+      await this.saveFoto(img);
+    }
   }
 
 }
