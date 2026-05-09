@@ -17,6 +17,22 @@ export class Agendamento {
     status: string = '';
     statusType: string = '';
     texto_ocorrencia: string = '';
+    atendimentos: Atendimento[] = [];
+}
+
+export class Atendimento {
+    id: string = '';
+    id_os: string = '';
+    os: string = '';
+    tecnico: string = '';
+    sequencia: string = '';
+    ocorrencia: string = '';
+    chegada: string = '';
+    inicio: string = '';
+    fim: string = '';
+    traslado: string = '';
+    situacao: string = '';
+    texto: string = '';
 }
 
 export class Cliente {

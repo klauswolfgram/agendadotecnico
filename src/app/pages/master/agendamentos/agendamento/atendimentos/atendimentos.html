@@ -1,1 +1,37 @@
-<p>atendimentos works!</p>
+<div class="container">
+    <div class="actions">
+        <button class="btn-novo" type="button" (click)="onClickNovo()">Novo</button>
+    </div>
+
+    @if(atendimentos().length === 0) {
+        <div class="empty">Nenhum atendimento encontrado!</div>
+    }
+
+    @for(item of atendimentos(); track item.id) {
+        <div class="item">
+            <div class="header">
+                <div class="content">
+                    <div class="numero"># {{item.sequencia}}</div>
+                    <div class="tecnico">Técnico: {{item.tecnico}}</div>
+                    <div class="status">Status OS: {{item.situacao}}</div>
+                </div>
+            </div>
+
+            <div class="details">
+                <div class="linha">
+                    <span class="label">Início</span>
+                    <span class="valor">{{item.inicio}}</span>
+                </div>
+                <div class="linha">
+                    <span class="label">Término</span>
+                    <span class="valor">{{item.fim}}</span>
+                </div>
+                <div class="linha">
+                    <span class="label">Ocorrência</span>
+                    <span class="valor">{{item.ocorrencia}}</span>
+                </div>
+                <div class="texto">{{item.texto}}</div>
+            </div>
+        </div>
+    }
+</div>
