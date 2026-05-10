@@ -23,15 +23,15 @@ export class Novo implements OnDestroy {
   private toolbarService = inject(ToolbarService);
   private erpService = inject(ErpService);
 
-  private sub = new Subscription;
+  private sub = new Subscription();
   private id = this.route.snapshot.paramMap.get('id');
 
-  public os = signal<Agendamento>(new Agendamento);
+  public os = signal<Agendamento>(new Agendamento());
 
   private fb = inject(FormBuilder);
 
   public form = this.fb.group({
-    data: [new Date],
+    data: [new Date()],
     inicio: ['', Validators.required],
     fim: ['', Validators.required],
     traslado: [''],
@@ -40,15 +40,18 @@ export class Novo implements OnDestroy {
     status: ['', [Validators.required]],
     coordenadas: [''],
     endereco: [''],
-  })
+  });
 
   constructor() {
     this.toolbarService.title.set('Novo Atendimento');
     this.toolbarService.isShowBtnBack.set(true);
-    this.sub.add(this.erpService.getAgenda().subscribe(value => {
-      const os = value.data.find(a => a.id === this.id) ?? new Agendamento;
-      this.os.set(os);
-    }))
+
+    this.sub.add(
+      this.erpService.getAgenda().subscribe(value => {
+        const os = value.data.find(a => a.id === this.id) ?? new Agendamento();
+        this.os.set(os);
+      })
+    );
 
     this.carregarLocalizacaoAtual();
   }
@@ -58,68 +61,77 @@ export class Novo implements OnDestroy {
   }
 
   private carregarLocalizacaoAtual = async (): Promise<void> => {
-
-    let latitude: any = null
-    let longitude: any = null
-    let coordenadas: any = null
-    let position: any = null
+    let latitude: number | null = null;
+    let longitude: number | null = null;
 
     try {
-
       const permission = await Geolocation.requestPermissions();
 
-      if (permission.location == 'granted' && permission.coarseLocation == 'granted') {
-        position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      if (permission.location === 'granted') {
+        const position = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 10000,
+        });
 
         latitude = position.coords.latitude;
         longitude = position.coords.longitude;
       } else {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            latitude = position.coords.latitude;
-            longitude = position.coords.longitude;
+        this.carregarLocalizacaoViaBrowser();
+        return;
+      }
 
-            coordenadas = `${latitude}, ${longitude}`;
+      if (latitude !== null && longitude !== null) {
+        const coordenadas = `${latitude}, ${longitude}`;
 
-            this.form.patchValue({coordenadas});
+        this.form.patchValue({
+          coordenadas
+        });
 
-            this.buscarEndereco(latitude, longitude);
-          },
-          () => {
-            this.notify.warning('Não foi possível obter sua localização.');
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-          }
-        );
-      };
+        this.buscarEndereco(latitude, longitude);
+      }
 
-      coordenadas = `${latitude}, ${longitude}`;
+    } catch {
+      this.carregarLocalizacaoViaBrowser();
+    }
+  };
+
+  private carregarLocalizacaoViaBrowser = (): void => {
+
+    if (!navigator.geolocation) {
+      this.notify.warning('Geolocalização não suportada neste navegador.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition((position) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      const coordenadas = `${latitude}, ${longitude}`;
 
       this.form.patchValue({ coordenadas });
 
       this.buscarEndereco(latitude, longitude);
-
-    } catch {
-      this.notify.warning('Não foi possível obter sua localização.');
-    }
+    }, () => this.notify.warning('Não foi possível obter sua localização.'),
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
   };
 
   private buscarEndereco = async (latitude: number, longitude: number): Promise<void> => {
+
     try {
+
       const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
       const data = await response.json();
-
       const endereco = data?.display_name ?? 'Endereço não localizado';
 
-      this.form.patchValue({
-        endereco
-      });
+      this.form.patchValue({ endereco });
 
     } catch {
       this.form.patchValue({ endereco: 'Não foi possível localizar o endereço' });
     }
+
   };
 }
