@@ -61,23 +61,28 @@ export class Novo implements OnDestroy {
   }
 
   private carregarLocalizacaoAtual = async (): Promise<void> => {
+    
     let latitude: number | null = null;
     let longitude: number | null = null;
 
     try {
+      
       const permission = await Geolocation.requestPermissions();
 
       if (permission.location === 'granted') {
-        const position = await Geolocation.getCurrentPosition({
-          enableHighAccuracy: true,
-          timeout: 10000,
-        });
+        
+        const position = await Geolocation.getCurrentPosition({enableHighAccuracy: true,timeout: 10000,});
+
+        console.log('Localizacao Capacitor',position);
 
         latitude = position.coords.latitude;
         longitude = position.coords.longitude;
+
       } else {
-        this.carregarLocalizacaoViaBrowser();
+
+        this.carregarLocalizacaoBrowser();
         return;
+
       }
 
       if (latitude !== null && longitude !== null) {
@@ -91,11 +96,11 @@ export class Novo implements OnDestroy {
       }
 
     } catch {
-      this.carregarLocalizacaoViaBrowser();
+      this.carregarLocalizacaoBrowser();
     }
   };
 
-  private carregarLocalizacaoViaBrowser = (): void => {
+  private carregarLocalizacaoBrowser = (): void => {
 
     if (!navigator.geolocation) {
       this.notify.warning('Geolocalização não suportada neste navegador.');
@@ -103,6 +108,9 @@ export class Novo implements OnDestroy {
     }
 
     navigator.geolocation.getCurrentPosition((position) => {
+
+      console.log('Localizacao Browser',position);
+
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
       const coordenadas = `${latitude}, ${longitude}`;
@@ -110,12 +118,9 @@ export class Novo implements OnDestroy {
       this.form.patchValue({ coordenadas });
 
       this.buscarEndereco(latitude, longitude);
-    }, () => this.notify.warning('Não foi possível obter sua localização.'),
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
+    },
+      () => this.notify.warning('Não foi possível obter sua localização.'),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
