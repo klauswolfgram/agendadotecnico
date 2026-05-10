@@ -1,11 +1,102 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnDestroy, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { PoComponentsModule, PoDialogService, PoNotificationService } from '@po-ui/ng-components';
+import { ToolbarService } from '../../../../../../core/services/toolbar-service';
+import { Agendamento, Atendimento } from '../../../../../../core/models/agenda';
+import { Subscription } from 'rxjs';
+import { ErpService } from '../../../../../../core/services/erp-service';
+import { Geolocation } from '@capacitor/geolocation';
 
 @Component({
   selector: 'app-novo',
-  imports: [],
+  imports: [ReactiveFormsModule,PoComponentsModule],
   templateUrl: './novo.html',
   styleUrl: './novo.scss',
 })
-export class Novo {
+export class Novo implements OnDestroy {
 
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private dialog = inject(PoDialogService);
+  private notify = inject(PoNotificationService);
+  private toolbarService = inject(ToolbarService);
+  private erpService = inject(ErpService);
+
+  private sub = new Subscription;
+  private id = this.route.snapshot.paramMap.get('id');
+
+  public os = signal<Agendamento>(new Agendamento);
+
+  private fb = inject(FormBuilder);
+
+  public form = this.fb.group({
+    data: [new Date],
+    inicio: ['',Validators.required],
+    fim: ['',Validators.required],
+    traslado: [''],
+    ocorrencia: ['',Validators.required],
+    laudo: ['',[Validators.required,Validators.minLength(10)]],
+    status: ['',[Validators.required]],
+    coordenadas: [''],
+    endereco: [''],
+  })
+
+  constructor() {
+    this.toolbarService.title.set('Novo Atendimento');
+    this.toolbarService.isShowBtnBack.set(true);
+    this.sub.add(this.erpService.getAgenda().subscribe(value => {
+      const os = value.data.find(a => a.id === this.id) ?? new Agendamento;
+      this.os.set(os);
+    }))
+
+    this.carregarLocalizacaoAtual();
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
+
+  private carregarLocalizacaoAtual = async (): Promise<void> => {
+    
+    try {
+      
+      const permission = await Geolocation.requestPermissions();
+
+      if (permission.location !== 'granted' && permission.coarseLocation !== 'granted') {
+        this.notify.warning('Permissão de localização não concedida.');
+        return;
+      }
+
+      const position = await Geolocation.getCurrentPosition({enableHighAccuracy: true,timeout: 10000});
+
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+
+      const coordenadas = `${latitude}, ${longitude}`;
+
+      this.form.patchValue({coordenadas});
+
+      this.buscarEndereco(latitude, longitude);
+
+    } catch {
+      this.notify.warning('Não foi possível obter sua localização.');
+    }
+  };
+
+  private buscarEndereco = async (latitude: number,longitude: number): Promise<void> => {
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+      const data = await response.json();
+
+      const endereco = data?.display_name ?? 'Endereço não localizado';
+
+      this.form.patchValue({
+        endereco
+      });
+
+    } catch {
+      this.form.patchValue({endereco: 'Não foi possível localizar o endereço'});
+    }
+  };  
 }
