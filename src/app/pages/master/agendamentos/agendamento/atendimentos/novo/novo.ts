@@ -7,6 +7,8 @@ import { Agendamento, Atendimento } from '../../../../../../core/models/agenda';
 import { Subscription } from 'rxjs';
 import { ErpService } from '../../../../../../core/services/erp-service';
 import { Geolocation } from '@capacitor/geolocation';
+import { StorageService } from '../../../../../../core/services/storage-service';
+import { environment } from '../../../../../../core/environments/environment';
 
 @Component({
   selector: 'app-novo',
@@ -22,6 +24,7 @@ export class Novo implements OnDestroy {
   private notify = inject(PoNotificationService);
   private toolbarService = inject(ToolbarService);
   private erpService = inject(ErpService);
+  private storageService = inject(StorageService);
 
   private sub = new Subscription();
   private id = this.route.snapshot.paramMap.get('id');
@@ -54,11 +57,22 @@ export class Novo implements OnDestroy {
     );
 
     this.carregarLocalizacaoAtual();
-  }
+  };
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();
-  }
+  };
+
+  public onClickSaveAtendimento = () => {
+    this.dialog.confirm({
+      title: 'Novo atendimento',
+      message: 'Confirma os dados do novo atendimento?',
+      confirm: async () => {
+        await this.storageService.set(environment.STORAGE_KEY_ATENDIMENTOS,this.form.value);
+        this.router.navigate(['/agendamento',this.id,'atendimentos'],{replaceUrl: true});
+      }
+    })
+  };
 
   private carregarLocalizacaoAtual = async (): Promise<void> => {
     
