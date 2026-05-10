@@ -71,7 +71,7 @@ export class Novo implements OnDestroy {
 
       if (permission.location === 'granted') {
         
-        const position = await Geolocation.getCurrentPosition({enableHighAccuracy: true,timeout: 10000,});
+        const position = await Geolocation.getCurrentPosition({enableHighAccuracy: true,timeout: 10000, maximumAge: 0});
 
         console.log('Localizacao Capacitor',position);
 
