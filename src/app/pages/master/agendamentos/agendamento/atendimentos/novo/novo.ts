@@ -10,7 +10,7 @@ import { Geolocation } from '@capacitor/geolocation';
 
 @Component({
   selector: 'app-novo',
-  imports: [ReactiveFormsModule,PoComponentsModule],
+  imports: [ReactiveFormsModule, PoComponentsModule],
   templateUrl: './novo.html',
   styleUrl: './novo.scss',
 })
@@ -32,12 +32,12 @@ export class Novo implements OnDestroy {
 
   public form = this.fb.group({
     data: [new Date],
-    inicio: ['',Validators.required],
-    fim: ['',Validators.required],
+    inicio: ['', Validators.required],
+    fim: ['', Validators.required],
     traslado: [''],
-    ocorrencia: ['',Validators.required],
-    laudo: ['',[Validators.required,Validators.minLength(10)]],
-    status: ['',[Validators.required]],
+    ocorrencia: ['', Validators.required],
+    laudo: ['', [Validators.required, Validators.minLength(10)]],
+    status: ['', [Validators.required]],
     coordenadas: [''],
     endereco: [''],
   })
@@ -58,24 +58,47 @@ export class Novo implements OnDestroy {
   }
 
   private carregarLocalizacaoAtual = async (): Promise<void> => {
-    
+
+    let latitude: any = null
+    let longitude: any = null
+    let coordenadas: any = null
+    let position: any = null
+
     try {
-      
+
       const permission = await Geolocation.requestPermissions();
 
-      if (permission.location !== 'granted' && permission.coarseLocation !== 'granted') {
-        this.notify.warning('Permissão de localização não concedida.');
-        return;
-      }
+      if (permission.location == 'granted' && permission.coarseLocation == 'granted') {
+        position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
 
-      const position = await Geolocation.getCurrentPosition({enableHighAccuracy: true,timeout: 10000});
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+      } else {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            latitude = position.coords.latitude;
+            longitude = position.coords.longitude;
 
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
+            coordenadas = `${latitude}, ${longitude}`;
 
-      const coordenadas = `${latitude}, ${longitude}`;
+            this.form.patchValue({coordenadas});
 
-      this.form.patchValue({coordenadas});
+            this.buscarEndereco(latitude, longitude);
+          },
+          () => {
+            this.notify.warning('Não foi possível obter sua localização.');
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          }
+        );
+      };
+
+      coordenadas = `${latitude}, ${longitude}`;
+
+      this.form.patchValue({ coordenadas });
 
       this.buscarEndereco(latitude, longitude);
 
@@ -84,7 +107,7 @@ export class Novo implements OnDestroy {
     }
   };
 
-  private buscarEndereco = async (latitude: number,longitude: number): Promise<void> => {
+  private buscarEndereco = async (latitude: number, longitude: number): Promise<void> => {
     try {
       const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
       const data = await response.json();
@@ -96,7 +119,7 @@ export class Novo implements OnDestroy {
       });
 
     } catch {
-      this.form.patchValue({endereco: 'Não foi possível localizar o endereço'});
+      this.form.patchValue({ endereco: 'Não foi possível localizar o endereço' });
     }
-  };  
+  };
 }
