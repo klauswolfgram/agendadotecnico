@@ -19,7 +19,7 @@
         <po-textarea formControlName="endereco" class="po-lg-12" p-label="Endereço" [p-disabled]="true" />
 
         <div class="actions">
-            <button type="submit" class="fab save" [disabled]="form.invalid">
+            <button type="submit" class="fab save" (click)="onClickSaveAtendimento()">
                 <span class="material-icons">save</span>
             </button>
         </div>

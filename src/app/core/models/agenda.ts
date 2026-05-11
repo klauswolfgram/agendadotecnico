@@ -33,6 +33,9 @@ export class Atendimento {
     traslado: string = '';
     situacao: string = '';
     texto: string = '';
+    sync: boolean = false;
+    coordenadas: string = '';
+    endereco: string = '';
 }
 
 export class Cliente {

@@ -9,6 +9,7 @@ import { ErpService } from '../../../../../../core/services/erp-service';
 import { Geolocation } from '@capacitor/geolocation';
 import { StorageService } from '../../../../../../core/services/storage-service';
 import { environment } from '../../../../../../core/environments/environment';
+import { AuthService } from '../../../../../../core/services/auth-service';
 
 @Component({
   selector: 'app-novo',
@@ -25,6 +26,7 @@ export class Novo implements OnDestroy {
   private toolbarService = inject(ToolbarService);
   private erpService = inject(ErpService);
   private storageService = inject(StorageService);
+  private authService = inject(AuthService);
 
   private sub = new Subscription();
   private id = this.route.snapshot.paramMap.get('id');
@@ -34,7 +36,7 @@ export class Novo implements OnDestroy {
   private fb = inject(FormBuilder);
 
   public form = this.fb.group({
-    data: [new Date()],
+    data: [new Date().toISOString().split('T')[0]],
     inicio: ['', Validators.required],
     fim: ['', Validators.required],
     traslado: [''],
@@ -65,13 +67,37 @@ export class Novo implements OnDestroy {
 
   public onClickSaveAtendimento = () => {
     this.dialog.confirm({
+      
       title: 'Novo atendimento',
       message: 'Confirma os dados do novo atendimento?',
       confirm: async () => {
-        await this.storageService.set(environment.STORAGE_KEY_ATENDIMENTOS,this.form.value);
+        
+        const atendimento: Atendimento = new Atendimento;
+        const form = this.form.value;
+        const data = form.data?.split('-');
+        
+        if(Array.isArray(data) && data.length === 3){
+          atendimento.chegada = `${data[2]}/${data[1]}/${data[0]} ${form.inicio?.slice(0,2)}:${form.inicio?.slice(2,4)}`;
+          atendimento.inicio = `${data[2]}/${data[1]}/${data[0]} ${form.inicio?.slice(0,2)}:${form.inicio?.slice(2,4)}`;
+          atendimento.fim = `${data[2]}/${data[1]}/${data[0]} ${form.fim?.slice(0,2)}:${form.fim?.slice(2,4)}`;
+        }
+
+        atendimento.id_os = this.os().id;
+        atendimento.os = this.os().os;
+        atendimento.tecnico = this.authService.current.tecnico.codtec;
+        atendimento.traslado = `${form.traslado?.slice(0,2)}:${form.traslado?.slice(2,4)}`;
+        atendimento.ocorrencia = form.ocorrencia ?? '';
+        atendimento.situacao = form.status ?? '';
+        atendimento.texto = form.laudo ?? '';
+        atendimento.coordenadas = form.coordenadas ?? '';
+        atendimento.endereco = form.endereco ?? '';
+        atendimento.sync = false;
+
+        await this.erpService.novoAtendimento(atendimento);
+
         this.router.navigate(['/agendamento',this.id,'atendimentos'],{replaceUrl: true});
       }
-    })
+    });
   };
 
   private carregarLocalizacaoAtual = async (): Promise<void> => {
@@ -86,8 +112,6 @@ export class Novo implements OnDestroy {
       if (permission.location === 'granted') {
         
         const position = await Geolocation.getCurrentPosition({enableHighAccuracy: true,timeout: 10000, maximumAge: 0});
-
-        console.log('Localizacao Capacitor',position);
 
         latitude = position.coords.latitude;
         longitude = position.coords.longitude;
@@ -122,8 +146,6 @@ export class Novo implements OnDestroy {
     }
 
     navigator.geolocation.getCurrentPosition((position) => {
-
-      console.log('Localizacao Browser',position);
 
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
