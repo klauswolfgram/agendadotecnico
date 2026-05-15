@@ -61,7 +61,7 @@ export class ErpService implements OnDestroy {
     this.http.get<Tabela>(`${environment.url_base}custom/app/agenda/tabelas/aa5`)
       .pipe(tap({
         subscribe: () => this.loading.isHidden.set(false),
-        next: async (servicos) => await this.storage.set<Tabela>(environment.STORAGE_KEY_AA5, servicos),
+        next: async (servicos) => await this.storage.set<Tabela>(environment.STORAGE_KEY_SERVICOS, servicos),
         error: (e) => this.notify.error(e?.error?.message || 'Erro ao carregar serviços'),
         finalize: () => this.loading.isHidden.set(true)
       }))
@@ -74,7 +74,7 @@ export class ErpService implements OnDestroy {
 
     this.loading.isHidden.set(false);
 
-    const servicos: Tabela = await this.storage.get<Tabela>(environment.STORAGE_KEY_AA5) ?? new Tabela();
+    const servicos: Tabela = await this.storage.get<Tabela>(environment.STORAGE_KEY_SERVICOS) ?? new Tabela();
 
     this.servicos.next(servicos);
     this.loading.isHidden.set(true);
@@ -85,7 +85,7 @@ export class ErpService implements OnDestroy {
     this.http.get<Tabela>(`${environment.url_base}custom/app/agenda/tabelas/aag`)
       .pipe(tap({
         subscribe: () => this.loading.isHidden.set(false),
-        next: async (ocorrencias) => await this.storage.set<Tabela>(environment.STORAGE_KEY_AAG, ocorrencias),
+        next: async (ocorrencias) => await this.storage.set<Tabela>(environment.STORAGE_KEY_OCORRENCIAS, ocorrencias),
         error: (e) => this.notify.error(e?.error?.message || 'Erro ao carregar ocorrências'),
         finalize: () => this.loading.isHidden.set(true)
       }))
@@ -98,7 +98,7 @@ export class ErpService implements OnDestroy {
 
     this.loading.isHidden.set(false);
 
-    const ocorrencias: Tabela = await this.storage.get<Tabela>(environment.STORAGE_KEY_AAG) ?? new Tabela();
+    const ocorrencias: Tabela = await this.storage.get<Tabela>(environment.STORAGE_KEY_OCORRENCIAS) ?? new Tabela();
 
     this.ocorrencias.next(ocorrencias);
     this.loading.isHidden.set(true);
