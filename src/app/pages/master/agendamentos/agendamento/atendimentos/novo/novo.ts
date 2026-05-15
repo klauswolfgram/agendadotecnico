@@ -1,7 +1,7 @@
 import { Component, inject, OnDestroy, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PoComponentsModule, PoDialogService, PoNotificationService } from '@po-ui/ng-components';
+import { PoComboOption, PoComponentsModule, PoDialogService, PoNotificationService } from '@po-ui/ng-components';
 import { ToolbarService } from '../../../../../../core/services/toolbar-service';
 import { Agendamento, Atendimento } from '../../../../../../core/models/agenda';
 import { Subscription } from 'rxjs';
@@ -32,6 +32,8 @@ export class Novo implements OnDestroy {
   private id = this.route.snapshot.paramMap.get('id');
 
   public os = signal<Agendamento>(new Agendamento());
+  public ocorrencias = signal<PoComboOption[]>([]);
+  public status = signal<PoComboOption[]>([{label: 'Aberta', value: '2'},{label: 'Encerrada', value: '1'}]);
 
   private fb = inject(FormBuilder);
 
@@ -42,7 +44,7 @@ export class Novo implements OnDestroy {
     traslado: [''],
     ocorrencia: ['', Validators.required],
     laudo: ['', [Validators.required, Validators.minLength(10)]],
-    status: ['', [Validators.required]],
+    status: ['2', [Validators.required]],
     coordenadas: [''],
     endereco: [''],
   });
@@ -55,6 +57,17 @@ export class Novo implements OnDestroy {
       this.erpService.getAgenda().subscribe(value => {
         const os = value.data.find(a => a.id === this.id) ?? new Agendamento();
         this.os.set(os);
+      })
+    );
+
+    this.sub.add(
+      this.erpService.getOcorrencias().subscribe(value => {
+        const ocorrencias: PoComboOption[] = value.data.map(item => ({
+          label: item.descricao,
+          value: item.codigo
+        }));
+
+        this.ocorrencias.set(ocorrencias);
       })
     );
 

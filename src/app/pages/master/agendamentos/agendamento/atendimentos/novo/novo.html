@@ -10,8 +10,8 @@
         
         <po-divider class="po-lg-12" p-label="Atendimento"/>
         
-        <po-combo formControlName="ocorrencia" class="po-lg-6 po-md-6 po-sm-12" p-label="Ocorrência"/>
-        <po-combo formControlName="status" class="po-lg-6 po-md-6 po-sm-12" p-label="Status OS"/>
+        <po-combo formControlName="ocorrencia" class="po-lg-6 po-md-6 po-sm-12" p-label="Ocorrência" [p-options]="ocorrencias()"/>
+        <po-combo formControlName="status" class="po-lg-6 po-md-6 po-sm-12" p-label="Status OS" [p-options]="status()"/>
         <po-textarea formControlName="laudo" class="po-lg-12" p-label="Laudo Técnico"/>
 
         <po-divider class="po-lg-12" p-label="Local do Atendimento" />

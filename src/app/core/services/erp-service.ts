@@ -25,6 +25,14 @@ export class ErpService implements OnDestroy {
 
   constructor() { }
 
+  get currentServicos(): Tabela {
+    return this.servicos.value;
+  }
+
+  get currentOcorrencias(): Tabela {
+    return this.ocorrencias.value;
+  }
+
   ngOnDestroy(): void {
     this.sub.unsubscribe();
   }
