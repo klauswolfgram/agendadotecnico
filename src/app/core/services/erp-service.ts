@@ -124,9 +124,7 @@ export class ErpService implements OnDestroy {
       const index = agenda.data.findIndex(a => a.id === novoAtendimento.id_os);
       if(index >= 0){
         agenda.data[index].atendimentos.push({...novoAtendimento});
-        this.agenda.next(agenda);
         await this.storage.set<Agenda>(environment.STORAGE_KEY_AGENDA,agenda);
-        console.log(this.agenda.value);
         this.notify.success({duration: 1500, message: 'Novo atendimento incluído!!'});
       }else{
         this.notify.warning({duration: 1500, message: 'OS não encontrada!'});
