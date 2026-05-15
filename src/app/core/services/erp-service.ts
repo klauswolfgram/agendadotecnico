@@ -6,6 +6,7 @@ import { PoNotificationService } from '@po-ui/ng-components';
 import { BehaviorSubject, Observable, Subscription, tap } from 'rxjs';
 import { Agenda, Atendimento } from '../models/agenda';
 import { environment } from '../environments/environment';
+import { Tabela } from '../models/tabela';
 
 @Injectable({
   providedIn: 'root',
@@ -19,6 +20,8 @@ export class ErpService implements OnDestroy {
   private sub = new Subscription();
 
   private agenda = new BehaviorSubject<Agenda>(new Agenda());
+  private servicos = new BehaviorSubject<Tabela>(new Tabela());
+  private ocorrencias = new BehaviorSubject<Tabela>(new Tabela());
 
   constructor() { }
 
@@ -27,6 +30,8 @@ export class ErpService implements OnDestroy {
   }
 
   public getAgenda = (): Observable<Agenda> => this.agenda.asObservable();
+  public getServicos = (): Observable<Tabela> => this.servicos.asObservable();
+  public getOcorrencias = (): Observable<Tabela> => this.ocorrencias.asObservable();
 
   public loadAgenda = () => {
     this.http.get<Agenda>(`${environment.url_base}custom/app/agenda/agendamentos`)
@@ -48,6 +53,54 @@ export class ErpService implements OnDestroy {
     const agenda: Agenda = await this.storage.get<Agenda>(environment.STORAGE_KEY_AGENDA) ?? new Agenda();
 
     this.agenda.next(agenda);
+    this.loading.isHidden.set(true);
+
+  }
+
+  public loadServicos = () => {
+    this.http.get<Tabela>(`${environment.url_base}custom/app/agenda/tabelas/aa5`)
+      .pipe(tap({
+        subscribe: () => this.loading.isHidden.set(false),
+        next: async (servicos) => await this.storage.set<Tabela>(environment.STORAGE_KEY_AA5, servicos),
+        error: (e) => this.notify.error(e?.error?.message || 'Erro ao carregar serviços'),
+        finalize: () => this.loading.isHidden.set(true)
+      }))
+      .subscribe({
+        next: (servicos) => this.servicos.next(servicos)
+      });
+  }
+
+  public loadServicosFromStorage = async () => {
+
+    this.loading.isHidden.set(false);
+
+    const servicos: Tabela = await this.storage.get<Tabela>(environment.STORAGE_KEY_AA5) ?? new Tabela();
+
+    this.servicos.next(servicos);
+    this.loading.isHidden.set(true);
+
+  }
+
+  public loadOcorrencias = () => {
+    this.http.get<Tabela>(`${environment.url_base}custom/app/agenda/tabelas/aag`)
+      .pipe(tap({
+        subscribe: () => this.loading.isHidden.set(false),
+        next: async (ocorrencias) => await this.storage.set<Tabela>(environment.STORAGE_KEY_AAG, ocorrencias),
+        error: (e) => this.notify.error(e?.error?.message || 'Erro ao carregar ocorrências'),
+        finalize: () => this.loading.isHidden.set(true)
+      }))
+      .subscribe({
+        next: (ocorrencias) => this.ocorrencias.next(ocorrencias)
+      });
+  }
+
+  public loadOcorrenciasFromStorage = async () => {
+
+    this.loading.isHidden.set(false);
+
+    const ocorrencias: Tabela = await this.storage.get<Tabela>(environment.STORAGE_KEY_AAG) ?? new Tabela();
+
+    this.ocorrencias.next(ocorrencias);
     this.loading.isHidden.set(true);
 
   }

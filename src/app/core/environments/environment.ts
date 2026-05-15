@@ -9,4 +9,6 @@ export const environment = {
     STORAGE_KEY_AGENDA: 'agenda',
     STORAGE_KEY_GALERIA: 'galeria',
     STORAGE_KEY_ATENDIMENTOS: 'atendimentos',
+    STORAGE_KEY_AA5: 'tabela-aa5',
+    STORAGE_KEY_AAG: 'tabela-aag',
 };
