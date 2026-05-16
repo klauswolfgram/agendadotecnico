@@ -1,15 +1,14 @@
-import { Component, inject, OnDestroy, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PoComboOption, PoComponentsModule, PoDialogService, PoNotificationService } from '@po-ui/ng-components';
 import { ToolbarService } from '../../../../../../core/services/toolbar-service';
-import { Agendamento, Atendimento } from '../../../../../../core/models/agenda';
-import { Subscription } from 'rxjs';
-import { ErpService } from '../../../../../../core/services/erp-service';
-import { Geolocation } from '@capacitor/geolocation';
 import { StorageService } from '../../../../../../core/services/storage-service';
-import { environment } from '../../../../../../core/environments/environment';
+import { ErpService } from '../../../../../../core/services/erp-service';
 import { AuthService } from '../../../../../../core/services/auth-service';
+import { Subscription } from 'rxjs';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Agendamento, Atendimento } from '../../../../../../core/models/agenda';
+import { Geolocation } from '../../../../../../core/services/geolocation';
 
 @Component({
   selector: 'app-novo',
@@ -23,169 +22,86 @@ export class Novo implements OnDestroy {
   private router = inject(Router);
   private dialog = inject(PoDialogService);
   private notify = inject(PoNotificationService);
-  private toolbarService = inject(ToolbarService);
-  private erpService = inject(ErpService);
-  private storageService = inject(StorageService);
-  private authService = inject(AuthService);
+  private toolbar = inject(ToolbarService);
+  private storage = inject(StorageService);
+  private geolocation = inject(Geolocation);
 
-  private sub = new Subscription();
+  public erp = inject(ErpService);
+  private auth = inject(AuthService);
+
+  private sub = new Subscription;
+
   private id = this.route.snapshot.paramMap.get('id');
-
-  public os = signal<Agendamento>(new Agendamento());
-  public ocorrencias = signal<PoComboOption[]>([]);
-  public status = signal<PoComboOption[]>([{label: 'Aberta', value: '2'},{label: 'Encerrada', value: '1'}]);
+  public os = signal<Agendamento>(new Agendamento);
+  public ocorrencias = computed<PoComboOption[]>(() => this.erp.ocorrencias().map(e => ({value: e.codigo, label: e.descri})));
+  public status_os = signal<PoComboOption[]>([{label: 'Aberta', value: '2'},{label: 'Encerrada',value: '1'}]);
 
   private fb = inject(FormBuilder);
-
   public form = this.fb.group({
     data: [new Date().toISOString().split('T')[0]],
     inicio: ['', Validators.required],
     fim: ['', Validators.required],
     traslado: [''],
-    ocorrencia: ['', Validators.required],
-    laudo: ['', [Validators.required, Validators.minLength(10)]],
-    status: ['2', [Validators.required]],
-    coordenadas: [''],
+    ocorrencia: ['',Validators.required],
+    laudo: ['',[Validators.required,Validators.minLength(5)]],
+    status_os: ['' ,Validators.required],
+    coordenadas: ['',Validators.required],
     endereco: [''],
   });
 
   constructor() {
-    this.toolbarService.title.set('Novo Atendimento');
-    this.toolbarService.isShowBtnBack.set(true);
+    
+    this.toolbar.isShowBtnBack.set(true);
+    this.toolbar.title.set('Novo Atendimento');
 
-    this.sub.add(
-      this.erpService.getAgenda().subscribe(value => {
-        const os = value.data.find(a => a.id === this.id) ?? new Agendamento();
-        this.os.set(os);
-      })
-    );
+    this.carregarLocalizacao();
 
-    this.sub.add(
-      this.erpService.getOcorrencias().subscribe(value => {
-        const ocorrencias: PoComboOption[] = value.data.map(item => ({
-          label: item.descricao,
-          value: item.codigo
-        }));
-
-        this.ocorrencias.set(ocorrencias);
-      })
-    );
-
-    this.carregarLocalizacaoAtual();
-  };
+    this.sub.add(this.erp.getAgenda().subscribe(value => {
+      const os = value.data.find(a => a.id === this.id) ?? new Agendamento;
+      this.os.set(os);
+    }));
+  }
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();
-  };
+  }
 
-  public onClickSaveAtendimento = () => {
+  public onConfirm = () => {
     this.dialog.confirm({
-      
-      title: 'Novo atendimento',
-      message: 'Confirma os dados do novo atendimento?',
+      title: 'Salvar Atendimento',
+      message: 'Confirma o salvamento do atendimento?',
       confirm: async () => {
-        
-        const atendimento: Atendimento = new Atendimento;
+        const novoAtendimento: Atendimento = new Atendimento;
         const form = this.form.value;
+
         const data = form.data?.split('-');
         
         if(Array.isArray(data) && data.length === 3){
-          atendimento.chegada = `${data[2]}/${data[1]}/${data[0]} ${form.inicio?.slice(0,2)}:${form.inicio?.slice(2,4)}`;
-          atendimento.inicio = `${data[2]}/${data[1]}/${data[0]} ${form.inicio?.slice(0,2)}:${form.inicio?.slice(2,4)}`;
-          atendimento.fim = `${data[2]}/${data[1]}/${data[0]} ${form.fim?.slice(0,2)}:${form.fim?.slice(2,4)}`;
+          const dataFormatada = `${data[2]}/${data[1]}/${data[0]}`;
+          novoAtendimento.chegada = `${dataFormatada} ${form.inicio?.slice(0,2)}:${form.inicio?.slice(2,4)}`;
+          novoAtendimento.inicio = `${dataFormatada} ${form.inicio?.slice(0,2)}:${form.inicio?.slice(2,4)}`;
+          novoAtendimento.fim = `${dataFormatada} ${form.fim?.slice(0,2)}:${form.fim?.slice(2,4)}`;
         }
 
-        atendimento.id_os = this.os().id;
-        atendimento.os = this.os().os;
-        atendimento.tecnico = this.authService.current.tecnico.codtec;
-        atendimento.traslado = `${form.traslado?.slice(0,2)}:${form.traslado?.slice(2,4)}`;
-        atendimento.ocorrencia = form.ocorrencia ?? '';
-        atendimento.situacao = form.status ?? '';
-        atendimento.texto = form.laudo ?? '';
-        atendimento.coordenadas = form.coordenadas ?? '';
-        atendimento.endereco = form.endereco ?? '';
-        atendimento.sync = false;
+        novoAtendimento.id_os = this.os().id;
+        novoAtendimento.os = this.os().os;
+        novoAtendimento.tecnico = this.auth.current.tecnico.codtec;
+        novoAtendimento.traslado = `${form.traslado?.slice(0,2)}:${form.traslado?.slice(2,4)}`;
+        novoAtendimento.ocorrencia = form.ocorrencia ?? '';
+        novoAtendimento.situacao = form.status_os ?? '2';
+        novoAtendimento.texto = form.laudo ?? '';
+        novoAtendimento.coordenadas = form.coordenadas ?? '';
+        novoAtendimento.endereco = form.endereco ?? '';
 
-        await this.erpService.novoAtendimento(atendimento);
+        await this.erp.setNovoAtendimento(novoAtendimento);
 
         this.router.navigate(['/agendamento',this.id,'atendimentos'],{replaceUrl: true});
       }
     });
-  };
+  }
 
-  private carregarLocalizacaoAtual = async (): Promise<void> => {
-    
-    let latitude: number | null = null;
-    let longitude: number | null = null;
-
-    try {
-      
-      const permission = await Geolocation.requestPermissions();
-
-      if (permission.location === 'granted') {
-        
-        const position = await Geolocation.getCurrentPosition({enableHighAccuracy: true,timeout: 10000, maximumAge: 0});
-
-        latitude = position.coords.latitude;
-        longitude = position.coords.longitude;
-
-      } else {
-
-        this.carregarLocalizacaoBrowser();
-        return;
-
-      }
-
-      if (latitude !== null && longitude !== null) {
-        const coordenadas = `${latitude}, ${longitude}`;
-
-        this.form.patchValue({
-          coordenadas
-        });
-
-        this.buscarEndereco(latitude, longitude);
-      }
-
-    } catch {
-      this.carregarLocalizacaoBrowser();
-    }
-  };
-
-  private carregarLocalizacaoBrowser = (): void => {
-
-    if (!navigator.geolocation) {
-      this.notify.warning('Geolocalização não suportada neste navegador.');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition((position) => {
-
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-      const coordenadas = `${latitude}, ${longitude}`;
-
-      this.form.patchValue({ coordenadas });
-
-      this.buscarEndereco(latitude, longitude);
-    },
-      () => this.notify.warning('Não foi possível obter sua localização.'),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  };
-
-  private buscarEndereco = async (latitude: number, longitude: number): Promise<void> => {
-
-    try {
-
-      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-      const data = await response.json();
-      const endereco = data?.display_name ?? 'Endereço não localizado';
-
-      this.form.patchValue({ endereco });
-
-    } catch {
-      this.form.patchValue({ endereco: 'Não foi possível localizar o endereço' });
-    }
-
-  };
+  private carregarLocalizacao = async () => {
+    await this.geolocation.carregarLocalizacaoAtual();
+    this.form.patchValue({coordenadas: this.geolocation.coordenadas(), endereco: this.geolocation.endereco()});
+  }
 }

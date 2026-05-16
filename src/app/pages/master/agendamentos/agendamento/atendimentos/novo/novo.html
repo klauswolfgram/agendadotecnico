@@ -1,28 +1,18 @@
 <div class="po-page-default">
-    <form [formGroup]="form" class="form-novo" style="padding-bottom: 50px;">
-        
-        <po-divider class="po-lg-12" p-label="Data/Hora" />
-        
-        <po-datepicker formControlName="data" class="po-lg-3 po-md-6 po-sm-12" p-label="Data"/>
+    <form [formGroup]="form">
+        <po-divider class="po-lg-12" p-label="Data/Hota" />
+        <po-datepicker formControlName="data" class="po-lg-3 po-md-6 po-sm-12" p-label="Data" />
         <po-input formControlName="inicio" class="po-lg-3 po-md-6 po-sm-12" p-label="Inicio" p-mask="99:99"/>
         <po-input formControlName="fim" class="po-lg-3 po-md-6 po-sm-12" p-label="Fim" p-mask="99:99"/>
         <po-input formControlName="traslado" class="po-lg-3 po-md-6 po-sm-12" p-label="Traslado" p-mask="99:99"/>
-        
-        <po-divider class="po-lg-12" p-label="Atendimento"/>
-        
-        <po-combo formControlName="ocorrencia" class="po-lg-6 po-md-6 po-sm-12" p-label="Ocorrência" [p-options]="ocorrencias()"/>
-        <po-combo formControlName="status" class="po-lg-6 po-md-6 po-sm-12" p-label="Status OS" [p-options]="status()"/>
-        <po-textarea formControlName="laudo" class="po-lg-12" p-label="Laudo Técnico"/>
-
+        <po-divider class="po-lg-12" p-label="Atendimento" />
+        <po-combo formControlName="ocorrencia" class="po-lg-3 po-md-6 po-sm-12" p-label="Ocorrencia" [p-options]="ocorrencias()" />
+        <po-combo formControlName="status_os" class="po-lg-3 po-md-6 po-sm-12" p-label="Status OS" [p-options]="status_os()" />
+        <po-textarea formControlName="laudo" class="po-lg-12" p-label="Laudo Técnico" />
         <po-divider class="po-lg-12" p-label="Local do Atendimento" />
         <po-input formControlName="coordenadas" class="po-lg-12" p-label="Coordenadas" p-disabled="true" />
-        <po-textarea formControlName="endereco" class="po-lg-12" p-label="Endereço" [p-disabled]="true" />
-
-        <div class="actions">
-            <button type="submit" class="fab save" (click)="onClickSaveAtendimento()">
-                <span class="material-icons">save</span>
-            </button>
-        </div>
-
+        <po-textarea formControlName="endereco" class="po-lg-12" p-label="Endereço" [p-disabled]="true"/>
+        <po-divider class="po-lg-12" />
+        <po-button class="po-lg-12" p-label="Confirmar" [p-disabled]="form.invalid" (p-click)="onConfirm()" style="padding-bottom: 10px;"/>
     </form>
 </div>

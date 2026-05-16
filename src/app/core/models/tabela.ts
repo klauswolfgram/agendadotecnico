@@ -2,12 +2,12 @@ export class Tabela {
     status: string = '';
     recurso: string = '';
     message: string = '';
-    data: ItemTabela[] = [];
+    data: Array<Linha> = [];
 }
 
-export class ItemTabela {
-    recno: string = '';
+export class Linha {
+    id: string = '';
     filial: string = '';
     codigo: string = '';
-    descricao: string = '';
+    descri: string = '';
 }

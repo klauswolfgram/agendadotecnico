@@ -8,7 +8,5 @@ export const environment = {
     STORAGE_KEY_SECTION: 'section',
     STORAGE_KEY_AGENDA: 'agenda',
     STORAGE_KEY_GALERIA: 'galeria',
-    STORAGE_KEY_ATENDIMENTOS: 'atendimentos',
-    STORAGE_KEY_SERVICOS: 'servicos',
     STORAGE_KEY_OCORRENCIAS: 'ocorrencias',
 };

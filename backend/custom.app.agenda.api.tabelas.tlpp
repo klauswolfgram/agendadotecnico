@@ -1,174 +1,124 @@
 #include 'totvs.ch'
-#include 'fwmvcdef.ch'
-
 #include 'tlpp-core.th'
 
 namespace custom.app.agenda.api.tabelas
 
 /*/{Protheus.doc} U_GET
-    Funcao para consulta de dados de tabelas
+    Programa para listagem de tabelas auxiliares do ERP
     @type  Function
     @author Klaus Wolfgram
-    @since 14/05/2026
+    @since 15/05/2026
     @version 1.0
-
-    https://erp:2200/api/custom/app/agenda/tabelas/ocorrencias
-    https://erp:2200/api/custom/app/agenda/tabelas/servicos
     /*/
-    
-    @get(endpoint="custom/app/agenda/tabelas/:recurso",description="API para consulta de dados de tabelas.")
+
+    @get(endpoint="custom/app/agenda/tabelas/:recurso",description="API para consulta de dados de tabelas auxiliares.")
 Function U_GET() as Logical
 
     Local err       as Object
     Local cMsgErr   as Character
 
-    Local cBody     as Character
-    Local jBody     as Json
     Local jHeader   as Json
     Local jPath     as Json
     Local jQuery    as Json
 
-    Local jResp     as Json
-
     Local cRecurso  as Character
-    Local xRecno    as Variant
     Local xData     as Variant
+
+    Local jResp     as Json
 
     try
 
-        err     := errorClass():new()
-        cMsgErr := ''
+        err         := errorClass():new()
+        cMsgErr     := ''
 
-        cBody   := oRest:getBodyRequest()
-        jBody   := jsonObject():new()
-        jBody:fromJson(cBody)
+        jHeader     := oRest:getHeaderRequest()
+        jQuery      := oRest:getQueryRequest()
+        jPath       := oRest:getPathParamsRequest()
 
-        jHeader := oRest:getHeaderRequest()
-        jQuery  := oRest:getQueryRequest()
-        jPath   := oRest:getPathParamsRequest()
-
-        cRecurso:= upper(jPath['recurso'])
-        xRecno  := jHeader['recno']
-
-        IF valtype(xRecno) == 'U'
-            xRecno := 0
-        ElseIF valtype(xRecno) == 'C'
-            xRecno := val(xRecno)
-        ElseIF valtype(xRecno) == 'N'
-            xRecno := xRecno
-        Else
-            xRecno := 0
-        EndIF
+        cRecurso    := jPath['recurso']
 
         DO CASE
-            CASE cRecurso == 'AA5' .or. cRecurso == 'SERVICOS'
-                xData := fnGetTabela(xRecno,jQuery,'AA5','AA5_FILIAL','AA5_CODSER','AA5_DESCRI')
-
-            CASE cRecurso == 'AAG' .or. cRecurso == 'OCORRENCIAS'
-                xData := fnGetTabela(xRecno,jQuery,'AAG','AAG_FILIAL','AAG_CODPRB','AAG_DESCRI')
+            CASE cRecurso == 'servicos'
+                xData := fnGetData('AA5','AA5_FILIAL','AA5_CODSER','AA5_DESCRI')
+            CASE cRecurso == 'ocorrencias'
+                xData := fnGetData('AAG','AAG_FILIAL','AAG_CODPRB','AAG_DESCRI')
 
             OTHERWISE
-                err:description := 'RECURSO INVALIDO -> ' + cRecurso
+                err:description := 'RECURSO INVALIDO: ' + cRecurso
                 throw err
 
-        END CASE
+        ENDCASE
 
-        jResp           := jsonObject():new()
-        jResp['status' ]:= 'success'
-        jResp['recurso']:= cRecurso
-        jResp['message']:= ''
-        jResp['data'   ]:= xData
+        jResp            := jsonObject():new()
+        jResp['status' ] := 'success'
+        jresp['recurso'] := cRecurso
+        jResp['message'] := ''
+        jResp['data'   ] := xData 
 
         oRest:setResponse(jResp:toJson())
 
     catch e
 
         IF !empty(e:description)
-
             cMsgErr := alltrim(e:description)
 
             IF !empty(e:errorstack)
-                cMsgErr += CRLF + "ERRORSTACK -->> " + LEFT(e:errorstack,500)
+                cMsgErr += CRLF + LEFT(e:errorstack,500)
             EndIF
-
         EndIF
 
-        jResp           := jsonObject():new()
-        jResp['status' ]:= 'error'
-        jResp['recurso']:= cRecurso
-        jResp['message']:= cMsgErr
-        jResp['data'   ]:= {}
+        jResp            := jsonObject():new()
+        jResp['status' ] := 'error'
+        jresp['recurso'] := cRecurso
+        jResp['message'] := cMsgErr        
+        jResp['data'   ] := nil
 
         oRest:setFault(jResp:toJson())
 
+    finally
+
     endtry
+
     
 Return .T.
 
-Static Function fnGetTabela(xRecno as Numeric,jQuery as Json,cTabela as Character,cCampoFilial as Character,cCampoCodigo as Character,cCampoDescri as Character) as Variant
+/*/{Protheus.doc} fnGetData
+    Funcao auxiliar para recuperacao dos registros retornados pela API.
+    @type  Static Function
+    @author Klaus Wolfgram
+    @since 15/05/2026
+    @version 1.0
+/*/
+Static Function fnGetData(cTabela,cCampoFilial,cCampoCodigo,cCampoDescri)
 
-    Local xData      as Variant
-    Local jItem      as Json
-    Local aCampos    as Array
-    Local x          as Numeric
-    Local cCampo     as Character
-    Local cTitulo    as Character
-    Local cCodigo    as Character
-    Local cDescricao as Character
+    Local cCodigo       as Character
+    Local cDescricao    as Character
 
-    IF xRecno > 0
+    Local xData         as Variant
+    Local jLinha        as Json
 
-        (cTabela)->(dbSetOrder(1),dbGoTo(xRecno))
-        
-        aCampos     := fwSx3Util():getAllFields(cTabela,.F.)
-        xData       := jsonObject():new()
+    //-- AAG->(dbSetOrder(1),dbSeek(xFilial('AAG')))
+    //-- While !AAG->(eof()) .and. AAG->AAG_FILIAL == xFilial("AAG")
 
-        For x := 1 To Len(aCampos)
+    (cTabela)->(dbSetOrder(1),dbSeek(xFilial(cTabela)))
 
-            cCampo  := alltrim(aCampos[x])
-            cTitulo := strtran(strtran(alltrim(getSX3Cache(cCampo,'X3_TITULO'))," ","-"),".","")
-            
-            xData[cTitulo] := (cTabela)->(&(cCampo))
+    xData               := array(0)
 
-        Next
+    While !(cTabela)->(eof()) .and. (cTabela)->(&(cCampoFilial)) == xFilial(cTabela)
 
-    Else
+        cCodigo         := (cTabela)->(&(cCampoCodigo))
+        cDescricao      := (cTabela)->(&(cCampoDescri))
 
-        xData := array(0)
+        jLinha          := jsonObject():new()
+        jLinha['id']    := (cTabela)->(recno())
+        jLinha['filial']:= alltrim((cTabela)->(&(cCampoFilial)))
+        jLinha['codigo']:= alltrim((cTabela)->(&(cCampoCodigo)))
+        jLinha['descri']:= alltrim((cTabela)->(&(cCampoDescri)))
 
-        (cTabela)->(dbSetOrder(1),dbSeek(xFilial(cTabela)))
+        aadd(xData,jLinha)
 
-        While !(cTabela)->(eof()) .and. (cTabela)->(&(cCampoFilial)) == xFilial(cTabela)
+        (cTabela)->(dbSkip())
 
-            cCodigo    := alltrim((cTabela)->(&(cCampoCodigo)))
-            cDescricao := alltrim((cTabela)->(&(cCampoDescri)))
-
-            IF !empty(jQuery['codigo'])
-                IF !(alltrim(upper(jQuery['codigo'])) $ upper(cCodigo))
-                    (cTabela)->(dbSkip())
-                    Loop
-                EndIF
-            EndIF
-
-            IF !empty(jQuery['descricao'])
-                IF !(alltrim(upper(jQuery['descricao'])) $ upper(cDescricao))
-                    (cTabela)->(dbSkip())
-                    Loop
-                EndIF
-            EndIF
-
-            jItem              := jsonObject():new()
-            jItem['recno'    ] := (cTabela)->(recno())
-            jItem['filial'   ] := (cTabela)->(&(cCampoFilial))
-            jItem['codigo'   ] := cCodigo
-            jItem['descricao'] := cDescricao
-
-            aadd(xData,jItem)
-
-            (cTabela)->(dbSkip())
-
-        Enddo
-
-    EndIF
-
+    Enddo
+    
 Return xData

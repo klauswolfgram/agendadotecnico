@@ -41,17 +41,11 @@ export class Master implements OnInit, OnDestroy {
     }
 
     if(this.isOnLine) {
-
       this.erpService.loadAgenda();
-      this.erpService.loadServicos();
       this.erpService.loadOcorrencias();
-
     }else{
-
       this.erpService.loadAgendaFromStorage();
-      this.erpService.loadServicosFromStorage();
       this.erpService.loadOcorrenciasFromStorage();
-      
     }
   }
 

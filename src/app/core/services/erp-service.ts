@@ -1,12 +1,12 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, OnDestroy } from '@angular/core';
+import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { StorageService } from './storage-service';
 import { LoadingService } from './loading-service';
 import { PoNotificationService } from '@po-ui/ng-components';
 import { BehaviorSubject, Observable, Subscription, tap } from 'rxjs';
 import { Agenda, Atendimento } from '../models/agenda';
 import { environment } from '../environments/environment';
-import { Tabela } from '../models/tabela';
+import { Linha, Tabela } from '../models/tabela';
 
 @Injectable({
   providedIn: 'root',
@@ -20,26 +20,39 @@ export class ErpService implements OnDestroy {
   private sub = new Subscription();
 
   private agenda = new BehaviorSubject<Agenda>(new Agenda());
-  private servicos = new BehaviorSubject<Tabela>(new Tabela());
-  private ocorrencias = new BehaviorSubject<Tabela>(new Tabela());
+  public ocorrencias = signal<Array<Linha>>([]);
 
   constructor() { }
-
-  get currentServicos(): Tabela {
-    return this.servicos.value;
-  }
-
-  get currentOcorrencias(): Tabela {
-    return this.ocorrencias.value;
-  }
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();
   }
 
+  public loadOcorrencias = () => {
+    this.http.get<Tabela>(`${environment.url_base}custom/app/agenda/tabelas/ocorrencias`)
+    .pipe(tap({
+      subscribe: () => this.loading.isHidden.set(false),
+      next: async (ocorrencias) => await this.storage.set<Tabela>(environment.STORAGE_KEY_OCORRENCIAS,ocorrencias),
+      error: (e) => this.notify.warning({duration: 2000, message: e.error.message}),
+      finalize: () => this.loading.isHidden.set(true)
+    }))
+    .subscribe({
+      next: (ocorrencias) => this.ocorrencias.set(ocorrencias.data)
+    })
+  }
+
+  public loadOcorrenciasFromStorage = async () => {
+    
+    this.loading.isHidden.set(false);
+    
+    const ocorrencias: Tabela = await this.storage.get<Tabela>(environment.STORAGE_KEY_OCORRENCIAS) ?? new Tabela;
+    
+    this.ocorrencias.set(ocorrencias.data);
+    this.loading.isHidden.set(true);
+    
+  }
+
   public getAgenda = (): Observable<Agenda> => this.agenda.asObservable();
-  public getServicos = (): Observable<Tabela> => this.servicos.asObservable();
-  public getOcorrencias = (): Observable<Tabela> => this.ocorrencias.asObservable();
 
   public loadAgenda = () => {
     this.http.get<Agenda>(`${environment.url_base}custom/app/agenda/agendamentos`)
@@ -65,73 +78,24 @@ export class ErpService implements OnDestroy {
 
   }
 
-  public loadServicos = () => {
-    this.http.get<Tabela>(`${environment.url_base}custom/app/agenda/tabelas/aa5`)
-      .pipe(tap({
-        subscribe: () => this.loading.isHidden.set(false),
-        next: async (servicos) => await this.storage.set<Tabela>(environment.STORAGE_KEY_SERVICOS, servicos),
-        error: (e) => this.notify.error(e?.error?.message || 'Erro ao carregar serviços'),
-        finalize: () => this.loading.isHidden.set(true)
-      }))
-      .subscribe({
-        next: (servicos) => this.servicos.next(servicos)
-      });
-  }
-
-  public loadServicosFromStorage = async () => {
-
-    this.loading.isHidden.set(false);
-
-    const servicos: Tabela = await this.storage.get<Tabela>(environment.STORAGE_KEY_SERVICOS) ?? new Tabela();
-
-    this.servicos.next(servicos);
-    this.loading.isHidden.set(true);
-
-  }
-
-  public loadOcorrencias = () => {
-    this.http.get<Tabela>(`${environment.url_base}custom/app/agenda/tabelas/aag`)
-      .pipe(tap({
-        subscribe: () => this.loading.isHidden.set(false),
-        next: async (ocorrencias) => await this.storage.set<Tabela>(environment.STORAGE_KEY_OCORRENCIAS, ocorrencias),
-        error: (e) => this.notify.error(e?.error?.message || 'Erro ao carregar ocorrências'),
-        finalize: () => this.loading.isHidden.set(true)
-      }))
-      .subscribe({
-        next: (ocorrencias) => this.ocorrencias.next(ocorrencias)
-      });
-  }
-
-  public loadOcorrenciasFromStorage = async () => {
-
-    this.loading.isHidden.set(false);
-
-    const ocorrencias: Tabela = await this.storage.get<Tabela>(environment.STORAGE_KEY_OCORRENCIAS) ?? new Tabela();
-
-    this.ocorrencias.next(ocorrencias);
-    this.loading.isHidden.set(true);
-
-  }
-
   public loadAgendaMock = () => {
     const dados = '{"status":"success","message":"","data":[{"filial":"01","id":"33","os":"120620/01","cliente":"EMEPOLO","equipamento":"PRODUTO ACABADO 1","data":"19/05/2025","ocorrencia":"PROBLEMA UTILIZACAO","situacao":"pendente","status":"Em atendimento","statusType":"warning","texto_ocorrencia":"","dadoscliente":{"codigo":"00000301","cgc":"              ","cep":"09010010","nome":"INDUSTRIA EMEPOLO /SP","endereco":"R DR ALBUQUERQUE LINS, 465","bairro":"BELA VISTA","cidade":"SANTO ANDRE","estado":"SP","telefone":"32421587","email":""},"atendimentos":[{"id":9,"id_os":33,"os":"12062001","tecnico":"BRUNO HENRIQUE","sequencia":"01","ocorrencia":"EQUIPAMENTO QUEBRADO","chegada":"09/05/2026 09:00","inicio":"09/05/2026 09:00","fim":"09/05/2026 12:00","traslado":"01:00","situacao":"Em Aberto","texto":"FOI FEITO O REPARO"},{"id":11,"id_os":33,"os":"12062001","tecnico":"BRUNO HENRIQUE","sequencia":"02","ocorrencia":"ATIVAR EQUIPAMENTO SUBSTITUIDO","chegada":"09/05/2026 13:00","inicio":"09/05/2026 13:00","fim":"09/05/2026 18:00","traslado":"01:00","situacao":"Em Aberto","texto":"ATIVAÇÃO DO EQUIPAMENTO REPARADO."}]},{"filial":"01","id":"29","os":"120616/01","cliente":"FF LTDA","equipamento":"PRODUTO ACABADO 1","data":"03/11/2008","ocorrencia":"DEFEITO NA FUNCAO TELFOM","situacao":"pendente","status":"Atendida","statusType":"success","texto_ocorrencia":"","dadoscliente":{"codigo":"00000401","cgc":"              ","cep":"01226010","nome":"FARTURAS FORTUNAS LTDA /SP","endereco":"R DAS PALMEIRAS, 456","bairro":"CONSOLACAO","cidade":"SAO PAULO","estado":"SP","telefone":"32155654","email":""},"atendimentos":[{"id":6,"id_os":29,"os":"12061601","tecnico":"","sequencia":"01","ocorrencia":"DEFEITO NA FUNCAO TELFOM","chegada":"03/11/2008 09:00","inicio":"03/11/2008 09:00","fim":"03/11/2008 12:00","traslado":"     ","situacao":"Encerrado","texto":""}]},{"filial":"01","id":"23","os":"120610/01","cliente":"CLIENTE PADRAO","equipamento":"PRODUTO ACABADO 1","data":"12/08/2008","ocorrencia":"PROBLEMA TECNICO","situacao":"encerrado","status":"Pedido Gerado","statusType":"warning","texto_ocorrencia":"","dadoscliente":{"codigo":"00000101","cgc":"              ","cep":"12356452","nome":"CLIENTE PADRAO","endereco":"R ESTRELA DALVA, 5482","bairro":"EUGENIO DE MELLO (SAO JOSE DOS","cidade":"SAO PAULO","estado":"SP","telefone":"50514050","email":"administrador@microsiga.com"},"atendimentos":[{"id":7,"id_os":23,"os":"12061001","tecnico":"","sequencia":"01","ocorrencia":"PROBLEMA TECNICO","chegada":"03/11/2008 09:00","inicio":"03/11/2008 09:00","fim":"03/11/2008 16:00","traslado":"     ","situacao":"Encerrado","texto":""}]},{"filial":"01","id":"22","os":"120609/01","cliente":"EMEPOLO","equipamento":"PRODUTO ACABADO 1","data":"12/08/2008","ocorrencia":"CAIXA AMASSADA","situacao":"pendente","status":"Atendida","statusType":"success","texto_ocorrencia":"","dadoscliente":{"codigo":"00000301","cgc":"              ","cep":"09010010","nome":"INDUSTRIA EMEPOLO /SP","endereco":"R DR ALBUQUERQUE LINS, 465","bairro":"BELA VISTA","cidade":"SANTO ANDRE","estado":"SP","telefone":"32421587","email":""},"atendimentos":[{"id":5,"id_os":22,"os":"12060901","tecnico":"","sequencia":"01","ocorrencia":"CAIXA AMASSADA","chegada":"12/08/2008 09:00","inicio":"12/08/2008 09:00","fim":"12/08/2008 17:00","traslado":"01:00","situacao":"Encerrado","texto":""}]},{"filial":"01","id":"17","os":"050606/01","cliente":"CLIENTE PADRAO","equipamento":"PRODUTO ACABADO 1","data":"05/06/2006","ocorrencia":"PROBLEMA TECNICO","situacao":"pendente","status":"Atendida","statusType":"success","texto_ocorrencia":"","dadoscliente":{"codigo":"00000101","cgc":"              ","cep":"12356452","nome":"CLIENTE PADRAO","endereco":"R ESTRELA DALVA, 5482","bairro":"EUGENIO DE MELLO (SAO JOSE DOS","cidade":"SAO PAULO","estado":"SP","telefone":"50514050","email":"administrador@microsiga.com"},"atendimentos":[{"id":4,"id_os":17,"os":"05060601","tecnico":"","sequencia":"01","ocorrencia":"PROBLEMA TECNICO","chegada":"05/06/2006 10:00","inicio":"05/06/2006 10:00","fim":"05/06/2006 11:15","traslado":"01:00","situacao":"Encerrado","texto":""}]},{"filial":"01","id":"13","os":"000012/01","cliente":"CLIENTE PADRAO","equipamento":"PRODUTO ACABADO 1","data":"29/05/2006","ocorrencia":"PROBLEMA UTILIZACAO","situacao":"pendente","status":"Atendida","statusType":"success","texto_ocorrencia":"","dadoscliente":{"codigo":"00000101","cgc":"              ","cep":"12356452","nome":"CLIENTE PADRAO","endereco":"R ESTRELA DALVA, 5482","bairro":"EUGENIO DE MELLO (SAO JOSE DOS","cidade":"SAO PAULO","estado":"SP","telefone":"50514050","email":"administrador@microsiga.com"},"atendimentos":[{"id":8,"id_os":13,"os":"00001201","tecnico":"","sequencia":"01","ocorrencia":"PROBLEMA UTILIZACAO","chegada":"16/04/2009 09:00","inicio":"16/04/2009 09:00","fim":"16/04/2009 10:00","traslado":"01:00","situacao":"Encerrado","texto":""}]},{"filial":"01","id":"6","os":"000004/01","cliente":"ECOSSISTEMA","equipamento":"PRODUTO ACABADO 1","data":"12/07/2005","ocorrencia":"MONTAGEM DE AMBIENTE","situacao":"encerrado","status":"Pedido Gerado","statusType":"warning","texto_ocorrencia":"","dadoscliente":{"codigo":"00000201","cgc":"00000000000000","cep":"02611015","nome":"ECOSSISTEMA DIGITAL S/A","endereco":"R ISABEL DE SIQUEIRA BARROS, 455","bairro":"SANTANA","cidade":"SAO PAULO","estado":"SP","telefone":"32410123","email":""},"atendimentos":[]},{"filial":"01","id":"5","os":"000003/01","cliente":"ECOSSISTEMA","equipamento":"PRODUTO ACABADO 1","data":"12/07/2005","ocorrencia":"LEVANTAMENTO DE DADOS","situacao":"pendente","status":"Atendida","statusType":"success","texto_ocorrencia":"","dadoscliente":{"codigo":"00000201","cgc":"00000000000000","cep":"02611015","nome":"ECOSSISTEMA DIGITAL S/A","endereco":"R ISABEL DE SIQUEIRA BARROS, 455","bairro":"SANTANA","cidade":"SAO PAULO","estado":"SP","telefone":"32410123","email":""},"atendimentos":[{"id":3,"id_os":5,"os":"00000301","tecnico":"","sequencia":"01","ocorrencia":"LEVANTAMENTO DE DADOS","chegada":"29/05/2006 08:00","inicio":"29/05/2006 08:00","fim":"29/05/2006 10:00","traslado":"     ","situacao":"Encerrado","texto":""}]},{"filial":"01","id":"4","os":"000002/01","cliente":"ECOSSISTEMA","equipamento":"PRODUTO ACABADO 1","data":"12/07/2005","ocorrencia":"MONTAGEM DE AMBIENTE","situacao":"pendente","status":"Pedido Gerado","statusType":"warning","texto_ocorrencia":"","dadoscliente":{"codigo":"00000201","cgc":"00000000000000","cep":"02611015","nome":"ECOSSISTEMA DIGITAL S/A","endereco":"R ISABEL DE SIQUEIRA BARROS, 455","bairro":"SANTANA","cidade":"SAO PAULO","estado":"SP","telefone":"32410123","email":""},"atendimentos":[{"id":2,"id_os":4,"os":"00000201","tecnico":"","sequencia":"01","ocorrencia":"MONTAGEM DE AMBIENTE","chegada":"12/07/2005 09:00","inicio":"12/07/2005 09:00","fim":"12/07/2005 11:00","traslado":"01:00","situacao":"Encerrado","texto":""}]},{"filial":"01","id":"1","os":"000001/01","cliente":"ECOSSISTEMA","equipamento":"PRODUTO ACABADO 1","data":"12/07/2005","ocorrencia":"PROBLEMA TECNICO","situacao":"encerrado","status":"Pedido Gerado","statusType":"warning","texto_ocorrencia":"","dadoscliente":{"codigo":"00000201","cgc":"00000000000000","cep":"02611015","nome":"ECOSSISTEMA DIGITAL S/A","endereco":"R ISABEL DE SIQUEIRA BARROS, 455","bairro":"SANTANA","cidade":"SAO PAULO","estado":"SP","telefone":"32410123","email":""},"atendimentos":[{"id":1,"id_os":1,"os":"00000101","tecnico":"","sequencia":"01","ocorrencia":"EQUIPAMENTO QUEBRADO","chegada":"09/03/2005 09:00","inicio":"09/03/2005 09:00","fim":"09/03/2005 12:00","traslado":"01:00","situacao":"Encerrado","texto":""}]}]}';    const agenda: Agenda = JSON.parse(dados)
     this.agenda.next(agenda);
   }
 
-  public novoAtendimento = async (novoAtendimento: Atendimento) => {
+  public setNovoAtendimento = async (novoAtendimento: Atendimento) => {
     try {
       const agenda = structuredClone(this.agenda.value);
-      const index = agenda.data.findIndex(a => a.id === novoAtendimento.id_os);
+      const index = agenda.data.findIndex(e => e.id === novoAtendimento.id_os);
       if(index >= 0){
         agenda.data[index].atendimentos.push({...novoAtendimento});
+        this.agenda.next(agenda);
         await this.storage.set<Agenda>(environment.STORAGE_KEY_AGENDA,agenda);
-        this.notify.success({duration: 1500, message: 'Novo atendimento incluído!!'});
-      }else{
-        this.notify.warning({duration: 1500, message: 'OS não encontrada!'});
+        this.notify.success({duration: 2000, message: 'Novo atendimento incluido'});
       }
     } catch (e) {
       console.log(e);
-      this.notify.error('Erro ao incluir atendimento');
+      this.notify.warning({duration: 2000, message: "Erro ao salvar atendimento. Veja o log."})
     }
   }
 
