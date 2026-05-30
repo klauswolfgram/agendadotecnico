@@ -18,6 +18,7 @@ export class Agendamento {
     statusType: string = '';
     texto_ocorrencia: string = '';
     atendimentos: Atendimento[] = [];
+    id_assinatura: string = '';
 }
 
 export class Atendimento {
@@ -35,6 +36,7 @@ export class Atendimento {
     texto: string = '';
     coordenadas: string = '';
     endereco: string = '';
+    id_assinatura: string = '';
 }
 
 export class Cliente {

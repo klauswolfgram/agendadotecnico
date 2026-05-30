@@ -12,6 +12,8 @@ export const routes: Routes = [
         {path: 'agendamento/:id/atendimentos', loadComponent: () => import('./pages/master/agendamentos/agendamento/atendimentos/atendimentos').then(v => v.Atendimentos)},
         {path: 'agendamento/:id/atendimentos/novo', loadComponent: () => import('./pages/master/agendamentos/agendamento/atendimentos/novo/novo').then(v => v.Novo)},
         {path: 'notificacoes', loadComponent: () => import('./pages/master/notificacoes/notificacoes').then(v => v.Notificacoes)},
+        {path: 'assinatura/:origem/:id_os', loadComponent: () => import('./pages/master/assinatura/assinatura').then(v => v.Assinatura)},
+        {path: 'assinatura/:origem/:id_os/:id_atendimento', loadComponent: () => import('./pages/master/assinatura/assinatura').then(v => v.Assinatura)},
     ]},
     {path: 'error', loadComponent: () => import('./pages/error/error').then(v => v.Error)},
     {path: '**', redirectTo: 'error'}

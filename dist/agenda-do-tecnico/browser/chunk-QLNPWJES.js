@@ -1,0 +1,1 @@
+import{Lb as o,Mb as n,hc as a,mb as t}from"./chunk-OEYVIR45.js";import"./chunk-WWX6BADO.js";var i=class r{static \u0275fac=function(e){return new(e||r)};static \u0275cmp=t({type:r,selectors:[["app-error"]],decls:2,vars:0,template:function(e,p){e&1&&(o(0,"p"),a(1,"error works!"),n())},encapsulation:2})};export{i as Error};

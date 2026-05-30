@@ -183,6 +183,7 @@ Static Function fnGetTasks(cTecnico as Character) as Array
         jAB7['texto_ocorrencia' ]   := ALLTRIM(MSMM(AB7->AB7_MEMO1))
         jAB7['dadoscliente'     ]   := jSA1
         jAB7['atendimentos'     ]   := array(0)
+        jAB7['id_assinatura'    ]   := ''
 
         AB9->(dbSetOrder(1),dbSeek(AB7->(AB7_FILIAL+AB7_NUMOS+AB7_ITEM)))
 
@@ -207,6 +208,7 @@ Static Function fnGetTasks(cTecnico as Character) as Array
             jAB9['situacao'     ]   := AB9->(IF(AB9_TIPO == '1', 'Encerrado', 'Em Aberto'))
 //          jAB9['status'       ]   := AB9->(IF(AB9_STATUS == 'E','Encerrado','Pendente' ))
             jAB9['texto'        ]   := cTexto
+            jAB9['id_assinatura']   := ''
 
             aadd(jAB7['atendimentos'],jAB9)
             

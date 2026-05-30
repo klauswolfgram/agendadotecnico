@@ -1,0 +1,115 @@
+:host {
+    display: block;
+    height: 100%;
+    padding-top: 60px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: var(--color-background);
+    color: var(--color-text-primary);
+
+    .assinatura-container {
+        padding: 16px;
+        padding-bottom: 88px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 8x;
+            background: var(--color-surface);
+
+            .label {
+                font-size: 12px;
+                color: var(--color-text-muted);
+                text-transform: uppercase;
+            }
+
+            .valor {
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--color-text-primary);
+            }
+        }
+
+        .canvas-wrapper {
+            height: min(46vh, 340px);
+            min-height: 260px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            background: var(--color-surface);
+            overflow: hidden;
+
+            .canvas {
+                display: block;
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+                cursor: crosshair;
+            }
+        }
+
+        .acoes {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+
+            .btn {
+                height: 42px;
+                padding: 0 24x;
+                border: none;
+                border-radius: 5px;
+                color: var(--color-text-title);
+                font-size: 14px;
+                font-weight: 600;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                cursor: pointer;
+                transition: 0.2s;
+
+                .material-icons {
+                    font-size: 20px;
+                }
+
+                &:hover {
+                    opacity: 0.92;
+                }
+
+                &:active {
+                    transform: scale(0.98);
+                }
+
+                &.limpar {
+                    background: var(--color-secondary);
+                }
+
+                &.apagar {
+                    background: var(--color-error);
+                }
+
+                &.salvar {
+                    background: var(--color-success);
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 420px) {
+  .acoes {
+    justify-content: stretch;
+  }
+
+  .btn {
+    flex: 1 1 100%;
+  }
+}

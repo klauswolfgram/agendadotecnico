@@ -64,6 +64,10 @@
 
         <div class="fab-container">
 
+            <button class="fab assinatura" (click)="goToAssinatura()">
+                <span class="material-icons">draw</span>
+            </button>
+
             <button class="fab atendimento" (click)="goToAtendimentos()">
                 <span class="material-icons">note_alt</span>
             </button>
@@ -79,6 +83,7 @@
             <button class="fab telefone" (click)="callToCustomer()">
                 <span class="material-icons">call</span>
             </button>
+
         </div>
     }@else {
         <div class="empty">Nenhum agendamento encontrado.</div>

@@ -1,0 +1,32 @@
+<div class="assinatura-container">
+    
+    <div class="info">
+        <span class="label">Origem</span>
+        <span class="valor">{{assinaturaService.origem() || 'Assinatura'}}</span>
+    </div>
+
+    <div class="canvas-wrapper">
+        <canvas 
+            #canvasAssinatura
+            class="canvas"
+            (pointerdown)="iniciarDesenho($event)"
+            (pointermove)="desenhar($event)"
+            (pointerup)="finalizarDesenho()"
+            (pointerleave)="finalizarDesenho()"
+            (pointercancel)="finalizarDesenho()"
+        ></canvas>
+    </div>
+
+    <div class="acoes">
+        <button class="btn limpar" type="button" (click)="limpar()">
+            <span class="material-icons">replay</span> Limpar
+        </button>
+        <button class="btn apagar" type="button" (click)="apagar()">
+            <span class="material-icons">delete</span> Apagar
+        </button>
+        <button class="btn salvar" type="button" (click)="salvar()">
+            <span class="material-icons">save</span> Salvar
+        </button>
+    </div>
+
+</div>

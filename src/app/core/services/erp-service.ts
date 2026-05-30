@@ -7,6 +7,7 @@ import { BehaviorSubject, Observable, Subscription, tap } from 'rxjs';
 import { Agenda, Atendimento } from '../models/agenda';
 import { environment } from '../environments/environment';
 import { Linha, Tabela } from '../models/tabela';
+import { Assinatura } from '../models/assinatura';
 
 @Injectable({
   providedIn: 'root',
@@ -97,6 +98,38 @@ export class ErpService implements OnDestroy {
       console.log(e);
       this.notify.warning({duration: 2000, message: "Erro ao salvar atendimento. Veja o log."})
     }
+  }
+
+  public setAssinaturaAgendamento = async (id: string, id_assinatura: string) => {
+    
+    const agenda = structuredClone(this.agenda.value);
+    const index = agenda.data.findIndex(item => item.id === id);
+
+    if(index < 0) return ;
+
+    agenda.data[index].id_assinatura = id_assinatura;
+    
+    this.agenda.next(agenda);
+    await this.storage.set<Agenda>(environment.STORAGE_KEY_AGENDA,agenda);
+
+  }
+
+  public setAssinaturaAtendimento = async (id: string, id_atendimento: string, id_assinatura: string) => {
+    
+    const agenda = structuredClone(this.agenda.value);
+    const index = agenda.data.findIndex(item => item.id === id);
+
+    if(index < 0) return ;  
+    
+    const index_atendimento = agenda.data[index].atendimentos.findIndex(item => item.id === id_atendimento);
+
+    if(index_atendimento < 0) return;
+
+    agenda.data[index].atendimentos[index_atendimento].id_assinatura = id_assinatura;
+    
+    this.agenda.next(agenda);
+    await this.storage.set<Agenda>(environment.STORAGE_KEY_AGENDA,agenda);
+    
   }
 
 }

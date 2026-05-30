@@ -36,6 +36,7 @@ export class Agendamento implements OnDestroy {
     this.sub.unsubscribe();
   }
 
+  public goToAssinatura = () => this.router.navigate(['/assinatura','agendamento',this.id]);
   public goToGallery = () => this.router.navigate(['/agendamento', this.id, 'galeria']);
   public goToAtendimentos = () => this.router.navigate(['/agendamento', this.id, 'atendimentos']);
   public callToCustomer = () => {
