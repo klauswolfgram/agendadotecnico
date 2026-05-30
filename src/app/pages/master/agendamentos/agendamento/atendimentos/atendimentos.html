@@ -31,6 +31,10 @@
                     <span class="valor">{{item.ocorrencia}}</span>
                 </div>
                 <div class="texto">{{item.texto}}</div>
+                <button class="btn-assinatura" type="button" (click)="onClickAssinatura(item.id)">
+                    <span class="material-icons">draw</span>
+                    Assinatura
+                </button>
             </div>
         </div>
     }

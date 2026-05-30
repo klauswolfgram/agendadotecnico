@@ -6,6 +6,7 @@ import { ErpService } from '../../../../../core/services/erp-service';
 import { ToolbarService } from '../../../../../core/services/toolbar-service';
 import { Subscription } from 'rxjs';
 import { Agendamento, Atendimento } from '../../../../../core/models/agenda';
+import { AssinaturaService } from '../../../../../core/services/assinatura-service';
 
 @Component({
   selector: 'app-atendimentos',
@@ -19,6 +20,7 @@ export class Atendimentos implements OnDestroy {
   private router = inject(Router);
   private dialog = inject(PoDialogService);
   private storageService = inject(StorageService);
+  private assinaturaService = inject(AssinaturaService);
   private ErpService = inject(ErpService);
   private toolbarService = inject(ToolbarService);
   private sub = new Subscription;
@@ -35,7 +37,8 @@ export class Atendimentos implements OnDestroy {
       this.atendimentos.set(os.atendimentos);
       this.toolbarService.isShowBtnBack.set(true);
       this.toolbarService.title.set('Atendimentos');
-    }))
+    }));
+    this.assinaturaService.origem.set('Atendimento');
   }
 
   ngOnDestroy(): void {
@@ -43,4 +46,5 @@ export class Atendimentos implements OnDestroy {
   }
 
   public onClickNovo = () => this.router.navigate(['/agendamento',this.id,'atendimentos','novo']);
+  public onClickAssinatura = (idAtendimento: string) => this.router.navigate(['/assinatura','atendimento',this.id,idAtendimento]);
 }

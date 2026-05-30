@@ -103,7 +103,7 @@ export class ErpService implements OnDestroy {
   public setAssinaturaAgendamento = async (id: string, id_assinatura: string) => {
     
     const agenda = structuredClone(this.agenda.value);
-    const index = agenda.data.findIndex(item => item.id === id);
+    const index = agenda.data.findIndex(item => String(item.id) === id);
 
     if(index < 0) return ;
 
@@ -117,11 +117,11 @@ export class ErpService implements OnDestroy {
   public setAssinaturaAtendimento = async (id: string, id_atendimento: string, id_assinatura: string) => {
     
     const agenda = structuredClone(this.agenda.value);
-    const index = agenda.data.findIndex(item => item.id === id);
+    const index = agenda.data.findIndex(item => String(item.id) === id);
 
     if(index < 0) return ;  
     
-    const index_atendimento = agenda.data[index].atendimentos.findIndex(item => item.id === id_atendimento);
+    const index_atendimento = agenda.data[index].atendimentos.findIndex(item => String(item.id) === id_atendimento);
 
     if(index_atendimento < 0) return;
 

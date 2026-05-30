@@ -155,6 +155,27 @@
   word-break: break-word;
 }
 
+.btn-assinatura {
+  align-self: flex-end;
+  min-height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 5px;
+  background: var(--color-primary);
+  color: var(--color-text-title);
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+
+  .material-icons {
+    font-size: 20px;
+  }
+}
+
 /* ========================= */
 /* Estado vazio              */
 /* ========================= */

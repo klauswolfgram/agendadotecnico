@@ -47,9 +47,9 @@ export class Assinatura implements OnInit, AfterViewInit, OnDestroy {
     await this.assinaturaService.loadFromStorage();
 
     const agenda = await firstValueFrom(this.erpService.getAgenda().pipe(
-      filter(agenda => agenda.data.some(item => item.id === this.id_os))
+      filter(agenda => agenda.data.some(item => String(item.id) === this.id_os))
     ));
-    const os = agenda.data.find(item => item.id === this.id_os);
+    const os = agenda.data.find(item => String(item.id) === this.id_os);
 
     if (!os) return;
 
@@ -59,7 +59,7 @@ export class Assinatura implements OnInit, AfterViewInit, OnDestroy {
         this.id_assinatura = os.id_assinatura;
         break;
       case 'atendimento':
-        const atendimento = os.atendimentos.find(item => item.id === this.id_atendimento);
+        const atendimento = os.atendimentos.find(item => String(item.id) === this.id_atendimento);
         this.id_assinatura = atendimento?.id_assinatura || '';
         break;
       default:
