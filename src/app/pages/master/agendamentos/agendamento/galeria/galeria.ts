@@ -9,6 +9,7 @@ import { Foto } from '../../../../../core/models/foto';
 import { Agendamento } from '../../../../../core/models/agenda';
 import { environment } from '../../../../../core/environments/environment';
 import { ToolbarService } from '../../../../../core/services/toolbar-service';
+import { FilaIntegracaoService } from '../../../../../core/services/fila-integracao-service';
 
 @Component({
   selector: 'app-galeria',
@@ -24,6 +25,8 @@ export class Galeria implements OnInit, OnDestroy {
   private storageService = inject(StorageService);
   private ErpService = inject(ErpService);
   private toolbarService = inject(ToolbarService);
+  private filaIntegracao = inject(FilaIntegracaoService);
+
   private sub = new Subscription;
 
   private id = this.route.snapshot.paramMap.get('id');
@@ -79,6 +82,7 @@ export class Galeria implements OnInit, OnDestroy {
     all.push(foto);
 
     await this.storageService.set<Foto[]>(environment.STORAGE_KEY_GALERIA,all);
+    await this.filaIntegracao.processarFilaIntegracao();
     await this.loadfotos();
   }  
 
@@ -108,6 +112,7 @@ export class Galeria implements OnInit, OnDestroy {
         }
 
         await this.storageService.set<Foto[]>(environment.STORAGE_KEY_GALERIA, all);
+        await this.filaIntegracao.processarFilaIntegracao();
         await this.loadfotos();
       }
     })
@@ -131,6 +136,7 @@ export class Galeria implements OnInit, OnDestroy {
     if(index >= 0) all[index].comment = this.comment();
 
     await this.storageService.set<Foto[]>(environment.STORAGE_KEY_GALERIA, all);
+    await this.filaIntegracao.processarFilaIntegracao();
 
     this.fotoSelecionada.set(null);
 

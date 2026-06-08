@@ -8,6 +8,7 @@ import { Agenda, Atendimento } from '../models/agenda';
 import { environment } from '../environments/environment';
 import { Linha, Tabela } from '../models/tabela';
 import { Assinatura } from '../models/assinatura';
+import { FilaIntegracaoService } from './fila-integracao-service';
 
 @Injectable({
   providedIn: 'root',
@@ -18,6 +19,7 @@ export class ErpService implements OnDestroy {
   private storage = inject(StorageService);
   private loading = inject(LoadingService);
   private notify = inject(PoNotificationService);
+  private filaIntegracao = inject(FilaIntegracaoService);
   private sub = new Subscription();
 
   private agenda = new BehaviorSubject<Agenda>(new Agenda());
@@ -59,7 +61,10 @@ export class ErpService implements OnDestroy {
     this.http.get<Agenda>(`${environment.url_base}custom/app/agenda/agendamentos`)
       .pipe(tap({
         subscribe: () => this.loading.isHidden.set(false),
-        next: async (agenda) => await this.storage.set<Agenda>(environment.STORAGE_KEY_AGENDA, agenda),
+        next: async (agenda) => {
+          await this.filaIntegracao.processarFilaIntegracao();
+          await this.storage.set<Agenda>(environment.STORAGE_KEY_AGENDA, agenda);
+        },
         error: (e) => this.notify.error(e?.error?.message || 'Erro ao carregar agenda'),
         finalize: () => this.loading.isHidden.set(true)
       }))
@@ -72,6 +77,7 @@ export class ErpService implements OnDestroy {
 
     this.loading.isHidden.set(false);
 
+    await this.filaIntegracao.processarFilaIntegracao();
     const agenda: Agenda = await this.storage.get<Agenda>(environment.STORAGE_KEY_AGENDA) ?? new Agenda();
 
     this.agenda.next(agenda);
@@ -91,7 +97,10 @@ export class ErpService implements OnDestroy {
       if(index >= 0){
         agenda.data[index].atendimentos.push({...novoAtendimento});
         this.agenda.next(agenda);
+        
         await this.storage.set<Agenda>(environment.STORAGE_KEY_AGENDA,agenda);
+        await this.filaIntegracao.processarFilaIntegracao();
+        
         this.notify.success({duration: 2000, message: 'Novo atendimento incluido'});
       }
     } catch (e) {
@@ -110,7 +119,9 @@ export class ErpService implements OnDestroy {
     agenda.data[index].id_assinatura = id_assinatura;
     
     this.agenda.next(agenda);
+    
     await this.storage.set<Agenda>(environment.STORAGE_KEY_AGENDA,agenda);
+    await this.filaIntegracao.processarFilaIntegracao();
 
   }
 
@@ -128,7 +139,9 @@ export class ErpService implements OnDestroy {
     agenda.data[index].atendimentos[index_atendimento].id_assinatura = id_assinatura;
     
     this.agenda.next(agenda);
+    
     await this.storage.set<Agenda>(environment.STORAGE_KEY_AGENDA,agenda);
+    await this.filaIntegracao.processarFilaIntegracao();
     
   }
 

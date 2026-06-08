@@ -3,6 +3,7 @@ import { StorageService } from './storage-service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Assinatura } from '../models/assinatura';
 import { environment } from '../environments/environment';
+import { FilaIntegracaoService } from './fila-integracao-service';
 
 @Injectable({
   providedIn: 'root',
@@ -10,6 +11,8 @@ import { environment } from '../environments/environment';
 export class AssinaturaService {
 
   private storage = inject(StorageService);
+  private filaIntegracao = inject(FilaIntegracaoService);
+
   private assinaturas = new BehaviorSubject<Assinatura[]>([]);
 
   public origem = signal<string>('Assinatura');
@@ -60,7 +63,10 @@ export class AssinaturaService {
     await this.storage.set<Assinatura[]>(environment.STORAGE_KEY_ASSINATURAS,assinaturas);
     this.assinaturas.next(assinaturas);
 
+    await this.filaIntegracao.processarFilaIntegracao();
+
     return index >= 0 ? assinaturas[index] : assinaturas[assinaturas.length -1];
+
   };
 
   public apagar = async (assinatura: Assinatura): Promise<void> => {
@@ -79,7 +85,9 @@ export class AssinaturaService {
     }
 
     await this.storage.set<Assinatura[]>(environment.STORAGE_KEY_ASSINATURAS,assinaturas);
-    this.assinaturas.next(assinaturas);    
+    this.assinaturas.next(assinaturas); 
+    
+    await this.filaIntegracao.processarFilaIntegracao();
   } 
   
 }
