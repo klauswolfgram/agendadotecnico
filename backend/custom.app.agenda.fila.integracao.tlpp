@@ -4,21 +4,224 @@
 namespace custom.app.agenda.fila.integracao
 
 /*/{Protheus.doc} U_PROCESSA
-    (long_description)
+    Programa para processamento dos registros da tabela de integracao do app agenda do tecnico.
     @type  Function
-    @author user
+    @author Klaus Wolfgram
     @since 07/06/2026
-    @version version
-    @param param_name, param_type, param_descr
-    @return return_var, return_type, return_description
-    @example
-    (examples)
-    @see (links_or_references)
+    @version 1.0
 
     custom.app.agenda.fila.integracao.U_PROCESSA
     /*/
-Function U_PROCESSA() as Logical
+Function U_PROCESSA()   as Logical
 
-    Local lret as Logical
+    Local lret          as Logical
+    Local lRPC          as Logical
+
+    Local bLastError    as Codeblock
+    Local cMsgErr       as Character
+    Local aRecSZ1       as Array
+    Local x             as Numeric
+
+    Private err         as Object
+
+    bLastError          := errorBlock({|e| err := e, break(e)})
+
+    IF type('cEmpAnt') <> 'C'
+        rpcSetEnv('99','01')
+        lRPC            := .T.
+    EndIF
+
+    BEGIN SEQUENCE
+
+        aRecSZ1         := fnGetSZ1()
+
+        For x := 1 To Len(aRecSZ1)
+
+            SZ1->(dbSetOrder(1),dbGoTo(aRecSZ1[x]))
+
+            IF SZ1->(alltrim(Z1_ORIGEM)) == 'ATENDIMENTO'
+                fnProcAtend()
+            ElseIF SZ1->(alltrim(Z1_ORIGEM)) $ 'GALERIA|ASSINATURA'
+                fnProcImagem()
+            EndIF
+
+        Next
+
+    RECOVER
+        
+        IF !empty(err:description)
+            cMsgErr := alltrim(err:description)
+
+            IF !(err:errorstack)
+                cMsgErr += CRLF + LEFT(err:errorstack,400)
+            EndIF
+        EndIF
+
+        conout("custom.app.agenda.fila.integracao.U_PROCESSA" + cMsgErr)
+
+    END SEQUENCE
+
+    errorBlock(bLastError)
+
+    IF lRPC
+        rpcClearEnv()
+    EndIF
     
 Return lret
+
+/*/{Protheus.doc} fnProcAtend
+    Processa os atendimentos.
+    @type  Static Function
+    @author Klaus Wolfgram
+    @since 08/06/2026
+    /*/
+Static Function fnProcAtend()
+
+    Local aCab          as Array
+    Local jBody         as Json
+    Local nIndAA1       as Numeric
+    Local nIndAAG       as Numeric
+
+    Local cChaveAA1     as Character
+    Local cChaveAAG     as Character
+
+    Local dDataChegada  as Date
+    Local dDataInicio   as Date
+    Local dDataFim      as Date
+
+    Local cHoraChegada  as Character
+    Local cHoraInicio   as Character
+    Local cHoraFim      as Character
+    Local cTraslado     as Character
+    Local cStatus       as Character
+    Local cSequencia    as Character
+    Local cTexto        as Character
+
+    Local nOpc          as Numeric
+
+    Private lMsErroAuto as Logical
+
+    aCab                := array(0)
+    
+    jBody               := jsonObject():new()
+    jBody:fromJson(SZ1->Z1_DADOS)
+
+    nIndAA1             := AA1->(retOrder('AA1','AA1_FILIAL+AA1_NOMTEC'))
+    nIndAAG             := AAG->(retOrder('AAG','AAG_FILIAL+AAG_DESCRI'))
+
+    cChaveAA1           := xFilial("AA1")+PADR(jBody['tecnico'   ],tamSX3('AA1_NOMTEC')[1])
+    cChaveAAG           := xFilial("AAG")+PADR(jBody['ocorrencia'],tamSX3('AAG_DESCRI')[1])
+
+    IF !AA1->(dbSetOrder(nIndAA1),dbSeek(cChaveAA1))
+        SZ1->(reclock("SZ1",.F.), Z1_STATUS := '2', Z1_MSGPROC := 'Tecnico não encontrado!' + CRLF + jBody['tecnico'])
+        return
+    EndIF
+
+    IF !AAG->(dbSetOrder(nIndAAG),dbSeek(cChaveAAG))
+        SZ1->(reclock("SZ1",.F.), Z1_STATUS := '2', Z1_MSGPROC := 'Ocorrência não encontrada!' + CRLF + jBody['ocorrencia'])
+        return
+    EndIF
+
+    AB7->(dbSetOrder(1),dbGoTo(jBody['id_os']))
+
+    dDataChegada        := CTOD(LEFT(jBody['chegada'],10))
+    dDataInicio         := CTOD(LEFT(jBody['inicio' ],10))
+    dDataFim            := CTOD(LEFT(jBody['fim'    ],10))
+
+    cHoraChegada        := STRTRAN(RIGHT(jBody['chegada'],5),":","")
+    cHoraInicio         := STRTRAN(RIGHT(jBody['inicio'],5),":","")
+    cHoraFim            := STRTRAN(RIGHT(jBody['fim'],5),":","")
+    cTraslado           := STRTRAN(jBody['traslado'],":","")
+    cStatus             := IF(upper(jBody['situacao']) == 'ENCERRADO','1','2')
+    cTexto              := jBody['texto']
+    
+    IF jBody['id'] >= 0
+
+        AB9->(dbSetOrder(1),dbGoTo(jBody['id']))
+        cSequencia      := AB9->AB9_SEQ
+        nOpc            := 4
+    
+    Else
+
+        AB9->(dbSetOrder(1),dbSeek(AB7->(AB7_FILIAL+AB7_NUMOS+AB7_ITEM)))
+        cSequencia      := '00'
+        
+        While !AB9->(eof()) .and. AB9->(AB9_FILIAL+AB9_NUMOS) == AB7->(AB7_FILIAL+AB7_NUMOS+AB7_ITEM)
+            cSequencia := AB9->AB9_SEQ
+            AB9->(dbSkip())
+        Enddo
+
+        cSequencia      := soma1(cSequencia)
+        nOpc            := 3
+
+    EndIF
+
+    aadd(aCab,{"AB9_SEQ"    ,AB7->(AB7_NUMOS+AB7_ITEM)  ,})
+    aadd(aCab,{"AB9_CODTEC" ,AA1->AA1_CODTEC            ,})
+    aadd(aCab,{"AB9_SEQ"    ,cSequencia                 ,})
+    aadd(aCab,{"AB9_DTCHEG" ,dDataChegada               ,})
+    aadd(aCab,{"AB9_HRCHEG" ,cHoraChegada               ,})
+    aadd(aCab,{"AB9_DTSAID" ,dDataFim                   ,})
+    aadd(aCab,{"AB9_HRSAID" ,cHoraFim                   ,})
+    aadd(aCab,{"AB9_DTINI"  ,dDataInicio                ,})
+    aadd(aCab,{"AB9_HRINI"  ,cHoraInicio                ,})
+    aadd(aCab,{"AB9_DTFIM"  ,dDataFim                   ,})
+    aadd(aCab,{"AB9_HRFIM"  ,cHoraFim                   ,})
+    aadd(aCab,{"AB9_TRASLA" ,cTraslado                  ,})
+    aadd(aCab,{"AB9_CODPRB" ,AAG->AAG_CODPRB            ,})
+    aadd(aCab,{"AB9_TIPO"   ,cStatus                    ,})
+    aadd(aCab,{"AB9_MEMO2"  ,cTexto                     ,})
+
+    lMsErroAuto := .F.
+
+    msExecAuto({|x,y,z| teca460(x,y,z)},aCab,array(0),nOpc)
+
+    IF lMsErroAuto
+        
+        mostraerro('\data\','erro.txt')
+        
+        cMsgErr := memoread('\data\erro.txt')
+        SZ1->(reclock(alias(),.F.), Z1_STATUS := '2', Z1_MSGPROC := cMsgErr         ,msunlock())
+
+    Else
+
+        SZ1->(reclock(alias(),.f.), Z1_STATUS := '1', Z1_RECNO   := AB9->(recno())  ,msunlock())
+        
+    EndIF
+        
+Return 
+
+/*/{Protheus.doc} fnProcImagem
+    Programa para processamento das imagens
+    @type  Static Function
+    @author Klaus Wolfgram
+    @since 08/06/2026
+    /*/
+Static Function fnProcImagem()
+    
+Return 
+
+/*/{Protheus.doc} fnGetSZ1
+    Lista os registros pendentes de processamento.
+    @type  Static Function
+/*/
+Static Function fnGetSZ1() as array
+
+    Local aRecSZ1   as Array
+    Local cSQL      as Character
+    Local cAliasSQL as Character
+
+    aRecSZ1         := array(0)
+
+    cSQL            := "SELECT R_E_C_N_O_ RECSZ1"
+    cSQL            += CRLF + "FROM " + RETSQLNAME("SZ1") + " SZ1"
+    cSQL            += CRLF + "WHERE SZ1.D_E_L_E_T_ = ' ' "
+    cSQL            += CRLF + "AND Z1_RECNO = 0"
+    cSQL            += CRLF + "AND Z1_STATUS = ' ' "
+    cSQL            += CRLF + "ORDER BY R_E_C_N_O_"
+
+    cAliasSQL       := mpSysOpenQuery(cSQL)
+
+    (cAliasSQL)->(dbEval({|| aadd(aRecSZ1,RECSZ1)}),dbCloseArea())
+    
+Return aRecSZ1
