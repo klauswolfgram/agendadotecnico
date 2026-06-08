@@ -1,0 +1,24 @@
+#include 'totvs.ch'
+#include 'tlpp-core.th'
+
+namespace custom.app.agenda.fila.integracao
+
+/*/{Protheus.doc} U_PROCESSA
+    (long_description)
+    @type  Function
+    @author user
+    @since 07/06/2026
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+
+    custom.app.agenda.fila.integracao.U_PROCESSA
+    /*/
+Function U_PROCESSA() as Logical
+
+    Local lret as Logical
+    
+Return lret

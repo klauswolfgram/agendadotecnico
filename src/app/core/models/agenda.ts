@@ -37,6 +37,7 @@ export class Atendimento {
     coordenadas: string = '';
     endereco: string = '';
     id_assinatura: string = '';
+    sync: boolean = false;
 }
 
 export class Cliente {
