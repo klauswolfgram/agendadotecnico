@@ -209,6 +209,7 @@ Static Function fnGetTasks(cTecnico as Character) as Array
 //          jAB9['status'       ]   := AB9->(IF(AB9_STATUS == 'E','Encerrado','Pendente' ))
             jAB9['texto'        ]   := cTexto
             jAB9['id_assinatura']   := ''
+            jAB9['sync'         ]   := .T.
 
             aadd(jAB7['atendimentos'],jAB9)
             

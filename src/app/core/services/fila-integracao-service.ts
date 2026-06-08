@@ -41,7 +41,7 @@ export class FilaIntegracaoService {
     let alterou = false;
 
     const agenda = await this.storage.get<Agenda>(environment.STORAGE_KEY_AGENDA) ?? new Agenda();
-    const pendentes = agenda.data.flatMap(agendamento => agendamento.atendimentos.filter(atendimento => !atendimento.sync));
+    const pendentes = agenda.data.flatMap(agendamento => agendamento.atendimentos.filter(atendimento => atendimento.sync === false));
     
     for (const atendimento of pendentes) {
       
