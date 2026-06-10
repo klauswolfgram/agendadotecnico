@@ -3,7 +3,7 @@
     <div class="empty">Nenhuma foto encontrada!</div>
     }@else {
     <div class="grid">
-        @for(foto of fotos(); track foto.id) {
+        @for(foto of fotos(); track foto.idApp) {
         <div class="img-wrapper">
             <img [src]="'data:image/jpeg;base64,' + foto.arq64" class="img" (click)="verFoto(foto)"/>
             <button class="btn-comment" (click)="openComment(foto)">

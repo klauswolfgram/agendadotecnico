@@ -8,6 +8,7 @@ import { PoNotificationService } from '@po-ui/ng-components';
 import { Agenda } from '../models/agenda';
 import { Foto } from '../models/foto';
 import { Assinatura } from '../models/assinatura';
+import { AuthService } from './auth-service';
 
 interface RetornoFilaIntegracao {
   status: 'success' | 'error';
@@ -23,8 +24,10 @@ export class FilaIntegracaoService {
   private storage = inject(StorageService);
   private network = inject(NetworkService);
   private notify = inject(PoNotificationService);
+  private auth = inject(AuthService);
 
   private endpoint = `${environment.url_base}custom/app/agenda/fila-integracao`;
+  private tecnico = this.auth.current.tecnico.codtec ?? '';
 
   public processarFilaIntegracao = async () => {
 
@@ -45,7 +48,7 @@ export class FilaIntegracaoService {
     
     for (const atendimento of pendentes) {
       
-      const sucesso = await this.enviarParaFila('ATENDIMENTO',atendimento);
+      const sucesso = await this.enviarParaFila('ATENDIMENTO',atendimento,atendimento.idApp);
       
       if(!sucesso) continue;
       atendimento.sync = true;
@@ -66,7 +69,7 @@ export class FilaIntegracaoService {
 
     for (const foto of pendentes) {
       
-      const sucesso = await this.enviarParaFila('GALERIA',foto);
+      const sucesso = await this.enviarParaFila('GALERIA',foto,foto.idApp);
       
       if(!sucesso) continue;
       
@@ -89,7 +92,7 @@ export class FilaIntegracaoService {
 
     for (const assinatura of pendentes) {
       
-      const sucesso = await this.enviarParaFila('ASSINATURA',assinatura);
+      const sucesso = await this.enviarParaFila('ASSINATURA',assinatura,assinatura.idApp);
       if(!sucesso) continue;
 
       assinatura.sync = true;
@@ -101,14 +104,21 @@ export class FilaIntegracaoService {
     if(alterou) await this.storage.set<Assinatura[]>(environment.STORAGE_KEY_ASSINATURAS,assinaturas);
   }
 
-  private enviarParaFila = async <T>(origem: string, dados: T): Promise<boolean> => {
+  private enviarParaFila = async <T>(origem: string, dados: T, idApp: string): Promise<boolean> => {
 
     try {
-      const retorno = await firstValueFrom(this.http.post<RetornoFilaIntegracao>(this.endpoint, dados, {headers: {origem}}));
+      
+      const tecnico = this.tecnico;
+      const retorno = await firstValueFrom(this.http.post<RetornoFilaIntegracao>(this.endpoint, dados, {headers: {origem,tecnico,idApp}}));
+      
       if(retorno.status === 'error') this.notify.error(retorno.message);
+      
       return retorno.status === 'success';
+
     } catch (e) {
+
       return false;
+      
     }
   }
 }

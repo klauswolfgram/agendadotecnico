@@ -11,19 +11,20 @@ namespace custom.app.agenda.fila.integracao
     @version 1.0
     /*/
 
-    @post(endpoint="custom/app/agenda/fila-integracao",description="API para inclusão de dados na fila de integracao do app")
+    @post(endpoint="custom/app/agenda/fila-integracao",description="API para inclusao de dados na fila de integracao do app")
 Function U_POST()
 
-    Local err as Object
-    Local cMsgErr as Character
+    Local err       as Object
+    Local cMsgErr   as Character
 
-    Local cBody as Character
-    Local jHeader as Json
-    Local jResp as Json
+    Local cBody     as Character
+    Local jHeader   as Json
+    Local jResp     as Json
 
-    Local cOrigem as Character
-    Local cTabela as Character
-    Local cIdFila as Character
+    Local cOrigem   as Character
+    Local cTecnico  as Character
+    Local cTabela   as Character
+    Local cIdFila   as Character
 
     try
 
@@ -33,14 +34,34 @@ Function U_POST()
         cBody            := oRest:getBodyRequest()
         jHeader          := oRest:getHeaderRequest()
 
-        cOrigem          := jHeader['origem']
+        cOrigem          := jHeader['origem' ]
+        cIdApp           := jHeader['idApp'  ]
+//      cTecnico         := jHeader['tecnico']
 
         IF empty(cOrigem)
             err:description := 'Origem nao informada'
             throw err
         EndIF
 
-        cOrigem         := upper(alltrim(cOrigem))
+        IF empty(cIdApp)
+            err:description := 'Atributo idApp nao informado'
+            throw err
+        EndIF
+
+        IF empty(cTecnico)
+            err:description := 'Codigo do tecnico invalido ou nao recebido'
+            throw err
+        EndIF        
+
+        cOrigem         := padr(cOrigem,tamSX3('Z1_ORIGEM')[1])
+        cIdApp          := padr(cIdApp ,tamSX3('Z1_IDAPP' )[1])
+
+        IF SZ1->(dbSetOrder(3),dbSeek(xFilial(alias())+cOrigem+cIdApp))
+            err:description := ''
+            throw err
+        EndIF
+
+        cOrigem         := alltrim(cOrigem)
 
         DO CASE
             
@@ -64,8 +85,11 @@ Function U_POST()
             SZ1->Z1_IDFILA := cIdFila
             SZ1->Z1_DATA   := date()
             SZ1->Z1_ORIGEM := cOrigem
+            SZ1->Z1_IDAPP  := cIdApp
             SZ1->Z1_DADOS  := cBody
             SZ1->Z1_TABELA := cTabela
+//          SZ1->Z1_CODTEC := cTecnico //-- caracter, tamanho 14
+//          SZ1->Z1_NOMTEC := posicione('AA1',1,xFilial('AA1')+cTecnico,'AA1_NOMTEC') //-- caracter, tamanho 30
         SZ1->(msunlock())
 
         startJob("custom.app.agenda.fila.integracao.U_PROCESSA",getEnvServer(),.F.)
@@ -73,6 +97,8 @@ Function U_POST()
         jResp            := jsonObject():new()
         jResp['status' ] := 'success'
         jResp['message'] := ''
+
+        oRest:setResponse(jResp:toJson())
 
     catch e
 
@@ -85,8 +111,14 @@ Function U_POST()
         EndIF
 
         jResp            := jsonObject():new()
-        jResp['status' ] := 'error'
+        jResp['status' ] := if(empty(cMsgErr),'success','error')
         jResp['message'] := cMsgErr
+
+        IF empty(cMsgErr)
+            oRest:setResponse(jResp:toJson())
+        Else
+            oRest:setFault(jResp:toJson())
+        EndIF
 
     finally
 

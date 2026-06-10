@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { Assinatura } from '../models/assinatura';
 import { environment } from '../environments/environment';
 import { FilaIntegracaoService } from './fila-integracao-service';
+import { AuthService } from './auth-service';
 
 @Injectable({
   providedIn: 'root',
@@ -11,8 +12,10 @@ import { FilaIntegracaoService } from './fila-integracao-service';
 export class AssinaturaService {
 
   private storage = inject(StorageService);
+  private authService = inject(AuthService);
   private filaIntegracao = inject(FilaIntegracaoService);
 
+  private tecnico = this.authService.current.tecnico;
   private assinaturas = new BehaviorSubject<Assinatura[]>([]);
 
   public origem = signal<string>('Assinatura');
@@ -28,7 +31,7 @@ export class AssinaturaService {
     if(!id) return null;
 
     const assinaturas = await this.storage.get<Assinatura[]>(environment.STORAGE_KEY_ASSINATURAS) || [];
-    const assinatura = assinaturas.find(item => item.id === id && !item.delete);
+    const assinatura = assinaturas.find(item => item.idApp === id && !item.delete);
     return assinatura || null;
 
   }
@@ -36,7 +39,7 @@ export class AssinaturaService {
   public salvar = async (arq64: string, id?: string | null): Promise<Assinatura> => {
 
     const assinaturas = await this.storage.get<Assinatura[]>(environment.STORAGE_KEY_ASSINATURAS) || [];
-    const index = assinaturas.findIndex(item => item.id === id);
+    const index = assinaturas.findIndex(item => item.idApp === id);
     const agora = new Date().toISOString();
 
     if(index >= 0) {
@@ -50,7 +53,7 @@ export class AssinaturaService {
       };
     }else{
       assinaturas.push({
-        id: Date.now().toString(),
+        idApp: Date.now().toString(),
         arq64,
         data_criacao: agora,
         data_atualizacao: agora,
@@ -72,7 +75,7 @@ export class AssinaturaService {
   public apagar = async (assinatura: Assinatura): Promise<void> => {
     
     const assinaturas = await this.storage.get<Assinatura[]>(environment.STORAGE_KEY_ASSINATURAS) || [];
-    const index = assinaturas.findIndex(item => item.id === assinatura.id);
+    const index = assinaturas.findIndex(item => item.idApp === assinatura.idApp);
 
     if(index >= 0) {
       assinaturas[index] = {

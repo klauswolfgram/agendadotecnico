@@ -69,7 +69,7 @@ export class Galeria implements OnInit, OnDestroy {
     const all = await this.storageService.get<Foto[]>(environment.STORAGE_KEY_GALERIA) || [];
     const foto = new Foto;
 
-    foto.id = Date.now().toString();
+    foto.idApp = Date.now().toString();
     foto.arq64 = base64;
     foto.id_os = this.os().id;
     foto.filial = this.os().filial;
@@ -104,7 +104,7 @@ export class Galeria implements OnInit, OnDestroy {
       message: 'Confirmo a deleção da imagem?',
       confirm: async () => {
         const all = await this.storageService.get<Foto[]>(environment.STORAGE_KEY_GALERIA) || [];
-        const index = all.findIndex(f => f.id === foto.id);
+        const index = all.findIndex(f => f.idApp === foto.idApp);
 
         if(index >= 0) {
           all[index].delete = true;
@@ -131,7 +131,7 @@ export class Galeria implements OnInit, OnDestroy {
     if(!foto) return; 
 
     const all = await this.storageService.get<Foto[]>(environment.STORAGE_KEY_GALERIA) || [];
-    const index = all.findIndex(f => f.id === foto.id);
+    const index = all.findIndex(f => f.idApp === foto.idApp);
 
     if(index >= 0) all[index].comment = this.comment();
 

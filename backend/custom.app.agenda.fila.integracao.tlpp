@@ -79,10 +79,8 @@ Static Function fnProcAtend()
 
     Local aCab          as Array
     Local jBody         as Json
-    Local nIndAA1       as Numeric
     Local nIndAAG       as Numeric
 
-    Local cChaveAA1     as Character
     Local cChaveAAG     as Character
 
     Local dDataChegada  as Date
@@ -98,6 +96,7 @@ Static Function fnProcAtend()
     Local cTexto        as Character
 
     Local nOpc          as Numeric
+//  Local lAchou        as Logical
 
     Private lMsErroAuto as Logical
 
@@ -106,59 +105,110 @@ Static Function fnProcAtend()
     jBody               := jsonObject():new()
     jBody:fromJson(SZ1->Z1_DADOS)
 
-    nIndAA1             := AA1->(retOrder('AA1','AA1_FILIAL+AA1_NOMTEC'))
     nIndAAG             := AAG->(retOrder('AAG','AAG_FILIAL+AAG_DESCRI'))
 
-    cChaveAA1           := xFilial("AA1")+PADR(jBody['tecnico'   ],tamSX3('AA1_NOMTEC')[1])
     cChaveAAG           := xFilial("AAG")+PADR(jBody['ocorrencia'],tamSX3('AAG_DESCRI')[1])
+    cCodTec             := jBody['tecnico']
 
-    IF !AA1->(dbSetOrder(nIndAA1),dbSeek(cChaveAA1))
+    IF empty(cCodTec)
+        SZ1->(reclock("SZ1",.F.), Z1_STATUS := '2', Z1_MSGPROC := 'Tecnico não informado!')
+        return
+    EndIF
+
+    IF !AA1->(dbSetOrder(1),dbSeek(xFilial(alias())+cCodTec))
         SZ1->(reclock("SZ1",.F.), Z1_STATUS := '2', Z1_MSGPROC := 'Tecnico não encontrado!' + CRLF + jBody['tecnico'])
         return
     EndIF
 
-    IF !AAG->(dbSetOrder(nIndAAG),dbSeek(cChaveAAG))
-        SZ1->(reclock("SZ1",.F.), Z1_STATUS := '2', Z1_MSGPROC := 'Ocorrência não encontrada!' + CRLF + jBody['ocorrencia'])
-        return
+    SZ1->(reclock(alias(),.F.), Z1_CODTEC := AA1->AA1_CODTEC, SZ1->Z1_NOMTEC := AA1->AA1_NOMTEC, msunlock())
+
+    IF !AAG->(dbSetOrder(1),dbSeek(xFilial(alias())+jBody['ocorrencia']))
+        IF !AAG->(dbSetOrder(nIndAAG),dbSeek(cChaveAAG))
+            SZ1->(reclock("SZ1",.F.), Z1_STATUS := '2', Z1_MSGPROC := 'Ocorrência não encontrada!' + CRLF + jBody['ocorrencia'])
+            return
+        EndIF
     EndIF
 
-    AB7->(dbSetOrder(1),dbGoTo(jBody['id_os']))
+    nRecAB7             := if(valtype(jBody['id_os']) == 'C',val(jBody['id_os']),jBody['id_os']);
+
+    AB7->(dbSetOrder(1),dbGoTo(nRecAB7))
 
     dDataChegada        := CTOD(LEFT(jBody['chegada'],10))
     dDataInicio         := CTOD(LEFT(jBody['inicio' ],10))
     dDataFim            := CTOD(LEFT(jBody['fim'    ],10))
 
     cHoraChegada        := STRTRAN(RIGHT(jBody['chegada'],5),":","")
-    cHoraInicio         := STRTRAN(RIGHT(jBody['inicio'],5),":","")
-    cHoraFim            := STRTRAN(RIGHT(jBody['fim'],5),":","")
-    cTraslado           := STRTRAN(jBody['traslado'],":","")
+    cHoraInicio         := STRTRAN(RIGHT(jBody['inicio' ],5),":","")
+    cHoraFim            := STRTRAN(RIGHT(jBody['fim'    ],5),":","")
+    cTraslado           := STRTRAN(jBody['traslado'     ],":","")
+    
+    cTraslado           := if('undefined' $ cTraslado,'0000',cTraslado)
     cStatus             := IF(upper(jBody['situacao']) == 'ENCERRADO','1','2')
     cTexto              := jBody['texto']
-    
-    IF jBody['id'] >= 0
 
-        AB9->(dbSetOrder(1),dbGoTo(jBody['id']))
-        cSequencia      := AB9->AB9_SEQ
-        nOpc            := 4
-    
-    Else
+    //-- chave para garantir idempotencia na gravacao do atendimento
+    cIdApp              := SZ1->Z1_IDAPP
 
-        AB9->(dbSetOrder(1),dbSeek(AB7->(AB7_FILIAL+AB7_NUMOS+AB7_ITEM)))
-        cSequencia      := '00'
-        
-        While !AB9->(eof()) .and. AB9->(AB9_FILIAL+AB9_NUMOS) == AB7->(AB7_FILIAL+AB7_NUMOS+AB7_ITEM)
-            cSequencia := AB9->AB9_SEQ
-            AB9->(dbSkip())
-        Enddo
-
-        cSequencia      := soma1(cSequencia)
-        nOpc            := 3
-
+    //-- se nao existir ou estiver sem conteudo, encerra a execuccao
+    IF empty(cIdApp)
+        SZ1->(reclock("SZ1",.F.), Z1_STATUS := '2', Z1_MSGPROC := 'Id do App nao informado.')
+        return
     EndIF
 
-    aadd(aCab,{"AB9_SEQ"    ,AB7->(AB7_NUMOS+AB7_ITEM)  ,})
+    //-- Normaliza o id de acordo com o tamanho do campo para correta execucao da busca por indice
+    cIdApp              := padr(cIdApp,tamSX3('AB9_YID')[1])
+
+    //-- Verifica se o registro ja existe
+    IF AB9->(dbOrderNickName('IDAPP'),dbSeek(xFilial(alias())+cIdApp))
+        SZ1->(reclock("SZ1",.F.), Z1_STATUS := '1', Z1_RECNO := AB9->(recno()), Z1_MSGPROC := 'Atendimento registrado anteriormente.')
+        return
+    EndIF
+
+    //-- Recno sendo enviado como texto e como numerico
+    nRecAB9             := if(valtype(jBody['id']) == 'C' .and. !empty(jBody['id']),val(jBody['id']),jBody['id'])
+    
+    //-- Verifica se o registro existe baseado no recno, nesse caso nao registra novamente.
+    IF !empty(nRecAB9)
+        
+        //-- AB9->(dbSetOrder(1),dbGoTo(jBody['id']))
+        //-- cSequencia      := AB9->AB9_SEQ
+        //-- nOpc            := 4
+
+        SZ1->(reclock("SZ1",.F.), Z1_STATUS := '1', Z1_RECNO := nRecAB9, Z1_MSGPROC := 'Atendimento registrado anteriormente.')
+        return
+    
+    EndIF
+
+    AB9->(dbSetOrder(1),dbSeek(AB7->(AB7_FILIAL+AB7_NUMOS+AB7_ITEM)))
+    
+    cSequencia      := '01'
+    nOpc            := 3
+        
+    While !AB9->(eof()) .and. AB9->(AB9_FILIAL+AB9_NUMOS) == AB7->(AB7_FILIAL+AB7_NUMOS+AB7_ITEM)
+            
+        //-- cSequencia := AB9->AB9_SEQ
+        //-- IF AB9->AB9_CODTEC == AA1->AA1_CODTEC .and. AB9->AB9_DTINI == dDataInicio .and. AB9->AB9_HRINI == cHoraInicio
+        //--     lAchou      := .T.
+        //--     nOpc        := 4
+        //--     cSequencia  := AB9->AB9_SEQ
+        //--     Exit
+        //-- EndIF
+
+        cSequencia  := soma1(cSequencia)
+        AB9->(dbSkip())
+
+    Enddo
+
+    /*/
+    IF !lAchou
+        cSequencia  := soma1(cSequencia)
+        nOpc        := 3
+    EndIF
+    /*/
+
+    aadd(aCab,{"AB9_NUMOS"  ,AB7->(AB7_NUMOS+AB7_ITEM)  ,})
+    aadd(aCab,{"AB9_SEQ"    ,cSequencia                 ,})    
     aadd(aCab,{"AB9_CODTEC" ,AA1->AA1_CODTEC            ,})
-    aadd(aCab,{"AB9_SEQ"    ,cSequencia                 ,})
     aadd(aCab,{"AB9_DTCHEG" ,dDataChegada               ,})
     aadd(aCab,{"AB9_HRCHEG" ,cHoraChegada               ,})
     aadd(aCab,{"AB9_DTSAID" ,dDataFim                   ,})
@@ -171,6 +221,7 @@ Static Function fnProcAtend()
     aadd(aCab,{"AB9_CODPRB" ,AAG->AAG_CODPRB            ,})
     aadd(aCab,{"AB9_TIPO"   ,cStatus                    ,})
     aadd(aCab,{"AB9_MEMO2"  ,cTexto                     ,})
+    aadd(aCab,{"AB9_YID"    ,cIdApp                     ,})
 
     lMsErroAuto := .F.
 

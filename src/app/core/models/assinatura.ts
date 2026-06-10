@@ -1,5 +1,5 @@
 export class Assinatura {
-    id: string = '';
+    idApp: string = '';
     arq64: string = '';
     data_criacao: string = '';
     data_atualizacao: string = '';

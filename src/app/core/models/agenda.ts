@@ -38,6 +38,7 @@ export class Atendimento {
     endereco: string = '';
     id_assinatura: string = '';
     sync: boolean = false;
+    idApp: string = '';
 }
 
 export class Cliente {

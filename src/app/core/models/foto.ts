@@ -1,5 +1,5 @@
 export class Foto {
-    id: string = '';
+    idApp: string = '';
     arq64: string = '';
     id_os: string = '';
     filial: string = '';

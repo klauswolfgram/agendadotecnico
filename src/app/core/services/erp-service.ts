@@ -9,25 +9,7 @@ import { environment } from '../environments/environment';
 import { Linha, Tabela } from '../models/tabela';
 import { Assinatura } from '../models/assinatura';
 import { FilaIntegracaoService } from './fila-integracao-service';
-
-export const mergeAgendaSyncState = (refreshed: Agenda, current: Agenda): Agenda => {
-  const syncedAttendances = new Map<string, boolean>();
-
-  current.data.forEach(agendamento => {
-    agendamento.atendimentos.forEach(atendimento => {
-      if(atendimento.id) syncedAttendances.set(String(atendimento.id), atendimento.sync);
-    });
-  });
-
-  refreshed.data.forEach(agendamento => {
-    agendamento.atendimentos.forEach(atendimento => {
-      const id = String(atendimento.id ?? '');
-      atendimento.sync = syncedAttendances.get(id) ?? Boolean(id);
-    });
-  });
-
-  return refreshed;
-};
+import { AuthService } from './auth-service';
 
 @Injectable({
   providedIn: 'root',
@@ -40,6 +22,8 @@ export class ErpService implements OnDestroy {
   private notify = inject(PoNotificationService);
   private filaIntegracao = inject(FilaIntegracaoService);
   private sub = new Subscription();
+  private auth = inject(AuthService);
+  private tecnico = this.auth.current.tecnico.codtec ?? '';
 
   private agenda = new BehaviorSubject<Agenda>(new Agenda());
   public ocorrencias = signal<Array<Linha>>([]);
@@ -76,7 +60,8 @@ export class ErpService implements OnDestroy {
 
   public getAgenda = (): Observable<Agenda> => this.agenda.asObservable();
 
-  public loadAgenda = () => {
+  public loadAgenda = async () => {
+    
     this.http.get<Agenda>(`${environment.url_base}custom/app/agenda/agendamentos`)
       .pipe(tap({
         subscribe: () => this.loading.isHidden.set(false),
@@ -86,11 +71,8 @@ export class ErpService implements OnDestroy {
       .subscribe({
         next: async (agenda) => {
           await this.filaIntegracao.processarFilaIntegracao();
-          const agendaAtual = await this.storage.get<Agenda>(environment.STORAGE_KEY_AGENDA) ?? new Agenda();
-          const agendaSincronizada = mergeAgendaSyncState(agenda, agendaAtual);
-
-          await this.storage.set<Agenda>(environment.STORAGE_KEY_AGENDA, agendaSincronizada);
-          this.agenda.next(agendaSincronizada);
+          await this.storage.set<Agenda>(environment.STORAGE_KEY_AGENDA, agenda);
+          this.agenda.next(agenda);
         }
       });
   }
@@ -113,18 +95,24 @@ export class ErpService implements OnDestroy {
   }
 
   public setNovoAtendimento = async (novoAtendimento: Atendimento) => {
+    
     try {
+      
       const agenda = structuredClone(this.agenda.value);
       const index = agenda.data.findIndex(e => e.id === novoAtendimento.id_os);
+
       if(index >= 0){
-        agenda.data[index].atendimentos.push({...novoAtendimento});
+      
+        agenda.data[index].atendimentos.push({...novoAtendimento,tecnico: this.tecnico, idApp: Date.now().toString()});
         this.agenda.next(agenda);
         
         await this.storage.set<Agenda>(environment.STORAGE_KEY_AGENDA,agenda);
         await this.filaIntegracao.processarFilaIntegracao();
         
         this.notify.success({duration: 2000, message: 'Novo atendimento incluido'});
+
       }
+
     } catch (e) {
       console.log(e);
       this.notify.warning({duration: 2000, message: "Erro ao salvar atendimento. Veja o log."})

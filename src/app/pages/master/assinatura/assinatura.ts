@@ -184,9 +184,9 @@ export class Assinatura implements OnInit, AfterViewInit, OnDestroy {
     const arq64 = this.canvasRef.nativeElement.toDataURL('image/png').split(',')[1];
     const assinatura = await this.assinaturaService.salvar(arq64, this.id_assinatura);
 
-    this.id_assinatura = assinatura.id;
+    this.id_assinatura = assinatura.idApp;
 
-    await this.salvarVinculoAssinatura(assinatura.id);
+    await this.salvarVinculoAssinatura(assinatura.idApp);
 
     this.assinatura.set(assinatura);
     this.arq64 = assinatura.arq64;

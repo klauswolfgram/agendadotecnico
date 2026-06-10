@@ -195,8 +195,8 @@ Static Function fnGetTasks(cTecnico as Character) as Array
             cTexto                  := alltrim(msmm(AB9->AB9_MEMO1,tamSX3('YP_TEXTO')[1]))
 
             jAB9                    := jsonObject():new()
-            jAB9['id'           ]   := AB9->(recno())
-            jAB9['id_os'        ]   := AB7->(recno())
+            jAB9['id'           ]   := AB9->(cValToChar(recno()))
+            jAB9['id_os'        ]   := AB7->(cValToChar(recno()))
             jAB9['os'           ]   := AB9->(transform(AB9_NUMOS,"@ 999999/99"))
             jAB9['tecnico'      ]   := AA1->(alltrim(encodeUTF8(AA1_NOMTEC)))
             jAB9['sequencia'    ]   := AB9->AB9_SEQ
@@ -210,6 +210,7 @@ Static Function fnGetTasks(cTecnico as Character) as Array
             jAB9['texto'        ]   := cTexto
             jAB9['id_assinatura']   := ''
             jAB9['sync'         ]   := .T.
+            jAB9['idApp'        ]   := AB9->AB9_YID
 
             aadd(jAB7['atendimentos'],jAB9)
             
