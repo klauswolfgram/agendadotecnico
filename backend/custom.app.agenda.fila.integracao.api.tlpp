@@ -22,7 +22,6 @@ Function U_POST()
     Local jResp     as Json
 
     Local cOrigem   as Character
-    Local cTecnico  as Character
     Local cTabela   as Character
     Local cIdFila   as Character
 
@@ -46,12 +45,7 @@ Function U_POST()
         IF empty(cIdApp)
             err:description := 'Atributo idApp nao informado'
             throw err
-        EndIF
-
-        IF empty(cTecnico)
-            err:description := 'Codigo do tecnico invalido ou nao recebido'
-            throw err
-        EndIF        
+        EndIF       
 
         cOrigem         := padr(cOrigem,tamSX3('Z1_ORIGEM')[1])
         cIdApp          := padr(cIdApp ,tamSX3('Z1_IDAPP' )[1])
