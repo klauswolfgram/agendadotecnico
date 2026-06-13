@@ -19,6 +19,6 @@
 			"label": "custom.app.agenda.fila.integracao.U_PROCESSA"
 		}
 	],
-	"lastProgramExecuted": "sigamdi",
+	"lastProgramExecuted": "custom.app.agenda.fila.integracao.U_PROCESSA",
 	"lastProgramArguments": []
 }

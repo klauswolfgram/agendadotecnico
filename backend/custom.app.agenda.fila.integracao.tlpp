@@ -103,7 +103,7 @@ Static Function fnProcAtend()
     aCab                := array(0)
     
     jBody               := jsonObject():new()
-    jBody:fromJson(SZ1->Z1_DADOS)
+    jBody:fromJson(decodeUTF8(SZ1->Z1_DADOS))
 
     nIndAAG             := AAG->(retOrder('AAG','AAG_FILIAL+AAG_DESCRI'))
 
@@ -142,7 +142,7 @@ Static Function fnProcAtend()
     cHoraFim            := STRTRAN(RIGHT(jBody['fim'    ],5),":","")
     cTraslado           := STRTRAN(jBody['traslado'     ],":","")
     
-    cTraslado           := if('undefined' $ cTraslado,'0000',cTraslado)
+    cTraslado           := if('undefined' $ cTraslado .or. empty(cTraslado),'0000',cTraslado)
     cStatus             := IF(upper(jBody['situacao']) == 'ENCERRADO','1','2')
     cTexto              := jBody['texto']
 
