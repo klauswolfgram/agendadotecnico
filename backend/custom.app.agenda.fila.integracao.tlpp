@@ -249,6 +249,82 @@ Return
     @since 08/06/2026
     /*/
 Static Function fnProcImagem()
+
+    Local jBody         as Json
+    Local cIdApp        as Character
+    Local cOrigem       as Character
+    Local cSequencia    as Character
+    Local cChaveTXM     as Character
+    Local lDelete       as Logical
+    Local lInclui       as Logical
+
+    jBody               := jsonObject():new()
+    jBody:fromJson(SZ1->Z1_DADOS)
+
+    cIdApp              := SZ1->(alltrim(Z1_IDAPP ))
+    cOrigem             := SZ1->(alltrim(Z1_ORIGEM))
+
+    IF cOrigem  == 'ASSINATURA'
+        return
+    EndIF
+
+    lDelete             := jBody['delete']
+    cChaveTXM           := xFilial("TXM")+strtran(jBody['numero'],"/","")
+
+    IF lDelete
+        IF jBody['sync']
+            IF TXM->(dbOrderNickName('IDAPP'),dbSeek(xFilial(alias())+cIdApp))
+                TXM->(reclock(alias(),.F.), dbDelete(), msunlock())
+                SZ1->(reclock(alias(),.F.), Z1_STATUS := '1', Z1_MSGPROC := 'Imagem deletada com sucesso', msunlock())
+                return
+            Else
+                SZ1->(reclock(alias(),.F.), Z1_STATUS := '1', Z1_MSGPROC := 'Imagem excluida anteriormente', msunlock())
+                return
+            EndIF
+        Else
+            SZ1->(reclock((alias(),.F.)), Z1_STATUS := '1', Z1_MSGPROC := 'Imagem nao existente na tabela SZ1 para operacao de delecao', msunlock())
+            return
+        EndIF
+    
+        return
+    EndIF
+
+    IF TXM->(dbOrderNickName('IDAPP'),dbSeek(xFilial(alias())+cIdApp))
+    
+        lInclui     := .F.
+        cSequencia  := TXM->TXM_ITFOTO
+    
+    Else
+        
+        lInclui     := .T.
+        cSequencia  := '00'
+        
+        TXM->(dbSetOrder(1),dbSeek(cChaveTXM))
+
+        While !TXM->(eof()) .and. TXM->(TXM_FILIAL+TXM_NUMOS+TXM_ITEM) == cChaveTXM
+            cSequencia := TXM->TXM_ITFOTO
+            TXM->(dbSkip())
+        Enddo
+
+        cSequencia  := soma1(cSequencia)
+
+    EndIF
+
+    TXM->(dbOrderNickName('IDAPP'),dbSeek(xFilial(alias())+cIdApp))
+
+    TXM->(reclock(alias(),lInclui))
+        TXM->TXM_FILIAL := xFilial('TXM')
+        TXM->TXM_NUMOS  := LEFT(jBody['numero'],6)
+        TXM->TXM_ITEM   := RIGHT(jBody['numero'],2)
+        TXM->TXM_ITFOTO := cSequencia
+        TXM->TXM_DESCRI := 'Foto da galeria'
+        TXM->TXM_FOTO   := jBody['arq64']
+        TXM->TXM_YID    := cIdApp
+        TXM->TXM_YCOMEN := jBody['comment']
+        TXM->TXM_YASSIN := 'N'
+    TXM->(msunlock())
+
+    SZ1->(reclock(alias(),.F.), Z1_STATUS := '1', Z1_MSGPROC := 'Imagem processada com sucesso!!', msunlock())
     
 Return 
 
