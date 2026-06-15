@@ -36,7 +36,7 @@ export class AssinaturaService {
 
   }
 
-  public salvar = async (arq64: string, id?: string | null): Promise<Assinatura> => {
+  public salvar = async (numero: string, arq64: string, id?: string | null): Promise<Assinatura> => {
 
     const assinaturas = await this.storage.get<Assinatura[]>(environment.STORAGE_KEY_ASSINATURAS) || [];
     const index = assinaturas.findIndex(item => item.idApp === id);
@@ -45,6 +45,7 @@ export class AssinaturaService {
     if(index >= 0) {
       assinaturas[index] = {
         ...assinaturas[index],
+        numero,
         arq64,
         data_atualizacao: agora,
         sync: false,
@@ -54,6 +55,7 @@ export class AssinaturaService {
     }else{
       assinaturas.push({
         idApp: Date.now().toString(),
+        numero,
         arq64,
         data_criacao: agora,
         data_atualizacao: agora,

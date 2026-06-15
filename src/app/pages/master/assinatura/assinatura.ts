@@ -28,6 +28,7 @@ export class Assinatura implements OnInit, AfterViewInit, OnDestroy {
   private desenhando: boolean = false;
   private arq64: string | null = null;
   private resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+  private numero: string = '';
 
   public origem = this.route.snapshot.paramMap.get('origem') || '';
   public id_os = this.route.snapshot.paramMap.get('id_os') || '';
@@ -52,6 +53,8 @@ export class Assinatura implements OnInit, AfterViewInit, OnDestroy {
     const os = agenda.data.find(item => String(item.id) === this.id_os);
 
     if (!os) return;
+
+    this.numero = os.os;
 
     switch (this.origem) {
 
@@ -182,7 +185,7 @@ export class Assinatura implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const arq64 = this.canvasRef.nativeElement.toDataURL('image/png').split(',')[1];
-    const assinatura = await this.assinaturaService.salvar(arq64, this.id_assinatura);
+    const assinatura = await this.assinaturaService.salvar(this.numero, arq64, this.id_assinatura);
 
     this.id_assinatura = assinatura.idApp;
 

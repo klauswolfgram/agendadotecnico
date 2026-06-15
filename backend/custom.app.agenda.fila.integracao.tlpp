@@ -265,7 +265,69 @@ Static Function fnProcImagem()
     cOrigem             := SZ1->(alltrim(Z1_ORIGEM))
 
     IF cOrigem  == 'ASSINATURA'
+
+        IF empty(jBody['numero'])
+            SZ1->(reclock(alias(),.F.), Z1_STATUS := '2', Z1_MSGPROC := 'Numero da OS nao informado',msunlock())
+            return
+        EndIF     
+
+        lDelete             := jBody['delete']
+        cChaveTXM           := xFilial("TXM")+strtran(jBody['numero'],"/","")   
+
+        IF lDelete
+
+            IF TXM->(dbOrderNickName('IDAPP'),dbSeek(xFilial(alias())+cIdApp))
+                TXM->(reclock(alias(),.F.), dbDelete(), msunlock())
+                SZ1->(reclock(alias(),.F.), Z1_STATUS := '1', Z1_MSGPROC := 'Assinatura deletada com sucesso', msunlock())
+                return
+            Else
+                SZ1->(reclock(alias(),.F.), Z1_STATUS := '1', Z1_MSGPROC := 'Assinatura excluida anteriormente ou nao encontrada', msunlock())
+                return
+            EndIF
+        
+            return
+
+        EndIF
+
+        IF TXM->(dbOrderNickName('IDAPP'),dbSeek(xFilial(alias())+alltrim(jBody['idApp'])))
+        
+            cSequencia := TXM->TXM_IDFOTO
+            lInclui    := .F.
+        
+        Else
+
+            lInclui     := .T.
+            cSequencia  := '00'
+            
+            TXM->(dbSetOrder(1),dbSeek(cChaveTXM))
+
+            While !TXM->(eof()) .and. TXM->(TXM_FILIAL+TXM_NUMOS+TXM_ITEM) == cChaveTXM
+                cSequencia := TXM->TXM_ITFOTO
+                TXM->(dbSkip())
+            Enddo
+
+            cSequencia  := soma1(cSequencia)
+            
+            TXM->(dbOrderNickName('IDAPP'),dbSeek(xFilial(alias())+cIdApp))
+
+        EndIF
+
+        TXM->(reclock(alias(),lInclui))
+            TXM->TXM_FILIAL := xFilial('TXM')
+            TXM->TXM_NUMOS  := LEFT(jBody['numero'],6)
+            TXM->TXM_ITEM   := RIGHT(jBody['numero'],2)
+            TXM->TXM_ITFOTO := cSequencia
+            TXM->TXM_DESCRI := 'Assinatura'
+            TXM->TXM_FOTO   := jBody['arq64']
+            TXM->TXM_YID    := cIdApp
+            TXM->TXM_YCOMEN := ' '
+            TXM->TXM_YASSIN := 'S'
+        TXM->(msunlock())
+
+        SZ1->(reclock(alias(),.F.), Z1_STATUS := '1', Z1_MSGPROC := 'Assinatura processada com sucesso!!', msunlock())            
+
         return
+
     EndIF
 
     lDelete             := jBody['delete']
@@ -308,9 +370,9 @@ Static Function fnProcImagem()
 
         cSequencia  := soma1(cSequencia)
 
-    EndIF
+        TXM->(dbOrderNickName('IDAPP'),dbSeek(xFilial(alias())+cIdApp))
 
-    TXM->(dbOrderNickName('IDAPP'),dbSeek(xFilial(alias())+cIdApp))
+    EndIF
 
     TXM->(reclock(alias(),lInclui))
         TXM->TXM_FILIAL := xFilial('TXM')
