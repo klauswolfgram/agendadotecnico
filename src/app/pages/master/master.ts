@@ -7,6 +7,7 @@ import { ErpService } from '../../core/services/erp-service';
 import { NetworkService } from '../../core/services/network-service';
 import { AuthService } from '../../core/services/auth-service';
 import { Subscription } from 'rxjs';
+import { NotificacoesService } from '../../core/services/notificacoes-service';
 
 @Component({
   selector: 'app-master',
@@ -20,6 +21,7 @@ export class Master implements OnInit, OnDestroy {
   private erpService = inject(ErpService);
   private networkService = inject(NetworkService);
   private authService = inject(AuthService);
+  private notificationService = inject(NotificacoesService);
 
   private sub = new Subscription();
 
@@ -41,9 +43,11 @@ export class Master implements OnInit, OnDestroy {
     }
 
     if(this.isOnLine) {
+      this.notificationService.loadFromAPI();
       this.erpService.loadAgenda();
       this.erpService.loadOcorrencias();
     }else{
+      this.notificationService.loadFromStorage();
       this.erpService.loadAgendaFromStorage();
       this.erpService.loadOcorrenciasFromStorage();
     }

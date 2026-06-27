@@ -1,0 +1,142 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.notifications-container {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--color-background);
+}
+
+.notifications-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.mark-all-button,
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: var(--color-action-default);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.mark-all-button {
+  padding: 7px 0;
+  font-size: 12px;
+}
+
+.mark-all-button .material-icons,
+.action-button .material-icons {
+  font-size: 18px;
+}
+
+.notifications-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.notification-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-text-title);
+}
+
+.notification-icon .material-icons {
+  font-size: 20px;
+}
+
+.notification-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.notification-content h2 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 14px;
+}
+
+.notification-content p {
+  margin: 4px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.notification-content time {
+  display: block;
+  margin-top: 5px;
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
+
+.notification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.action-button {
+  padding: 4px 0;
+  font-size: 11px;
+}
+
+.read-button {
+  color: var(--color-success);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 20px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.empty-state .material-icons {
+  font-size: 38px;
+}
+
+@media (max-width: 480px) {
+  .notifications-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

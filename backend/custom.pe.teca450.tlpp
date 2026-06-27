@@ -1,0 +1,103 @@
+#include 'totvs.ch'
+#include 'tlpp-core.th'
+
+/*/{Protheus.doc} U_AT450GRV
+    Ponto de entrada executado na gravacao de ordens de servicos.
+    @type  Function
+    @author Klaus Wolfgram
+    @since 20/06/2026
+    @version 1.0
+    /*/
+Function U_AT450GRV()
+    
+    //-- gera as notificacoes para inclusao de ordens de servicos
+    fnNotify()
+    
+Return
+
+/*/{Protheus.doc} fnNotify
+    Programa para inclusao de notificacoes do app
+    @type  Static Function
+    @author Klaus Wolfgram
+    @since 20/06/2026
+    @version 1.0
+    /*/
+Static Function fnNotify()
+
+    Local cAliasSQL as Character
+    Local cSQL      as Character
+
+    Local aAreaAB7  as Array
+
+    Local err       as Object
+    Local bLastErr  as Codeblock
+    Local cMsgErr   as Character
+
+    Local aAtend    as Array
+
+    Local x         as Numeric
+
+    Local cTitulo   as Character
+    Local cMensagem as Character
+    Local cLink     as Character
+
+    aAreaAB7        := AB7->(getArea())
+
+    err             := errorClass():new()
+    bLastErr        := errorBlock({|e| err := e, break(e)})
+    cMsgErr         := ''
+
+    BEGIN SEQUENCE
+
+        cSQL        := "SELECT AA1_CODTEC "
+        cSQL        += CRLF + "FROM " + retSQLName("AA1") + " AA1"
+        cSQL        += CRLF + "WHERE AA1.D_E_L_E_T_ = ' ' "
+        cSQL        += CRLF + "AND AA1_CODUSR <> ' ' "
+        cSQL        += CRLF + "ORDER BY AA1_CODTEC"
+
+        cAliasSQL   := mpSysOpenQuery(cSQL)
+
+        (cAliasSQL)->(aAtend := array(0),dbEval({|| aadd(aAtend,AA1_CODTEC)}),dbCloseArea())
+
+        AB7->(dbSetOrder(1),dbSeek(AB6->(AB6_FILIAL+AB6_NUMOS)))
+
+        While AB7->(AB7_FILIAL+AB7_NUMOS) == AB6->(AB6_FILIAL+AB6_NUMOS) .and. !AB7->(eof())
+
+            IF AB7->AB7_YNOTIF == 'S'
+                AB7->(dbSkip())
+                Loop
+            EndIF
+
+            cTitulo     := 'Nova OS: ' + AB7->(AB7_NUMOS + '/' + AB7_ITEM)
+            cMensagem   := 'Um nova OS foi incluida: ' + AB7->(AB7_NUMOS + '/' + AB7_ITEM)
+            cLink       := '/agendamento/' + AB7->(cValToChar(recno())) 
+
+            For x := 1 To Len(aAtend)
+                custom.app.agenda.notificacoes.u_incluir(aAtend[x],'OS',cTitulo,cMensagem,cLink)
+            Next
+
+            AB7->(reclock(alias(),.F.))
+                AB7->AB7_YNOTIF := 'S'
+            AB7->(msunlock())
+            
+            AB7->(dbSkip())
+
+        Enddo
+
+    RECOVER
+
+        IF !empty(err:description)
+            cMsgErr := alltrim(err:description)
+
+            IF !empty(err:errorstack)
+                cMsgErr += CRLF + LEFT(err:errorstack,500)
+            EndIF
+
+            Conout(cMsgErr)
+        EndIF
+
+    END SEQUENCE
+
+    restarea(aAreaAB7)
+    
+Return 

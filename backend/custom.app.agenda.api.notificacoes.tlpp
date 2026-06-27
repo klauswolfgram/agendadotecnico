@@ -1,0 +1,297 @@
+#include 'tlpp-core.th'
+#include 'totvs.ch'
+
+namespace custom.app.agenda.api.notificacoes
+
+/*/{Protheus.doc} U_GET
+    Retorna as notificacoes nao lidas do tecnico.
+    @type  Function
+    @author Klaus Wolfgram
+    @since 20/06/2026
+    @version 1.0
+    /*/
+
+    @get(endpoint='/custom/app/agenda/notificacoes',description='API para consulta de notificacoes nao lidas.')
+Function U_GET() as Logical
+
+    Local err        as Object
+    Local cMsgErr    as Character
+    Local jHeader    as Json
+    Local jQuery     as Json
+    Local jResp      as Json
+    Local jNotif     as Json
+    Local aNotif     as Array
+    Local cTecnico   as Character
+    Local cSQL       as Character
+    Local cAliasSQL  as Character
+    Local oQueryExec as Object
+
+    try
+
+        err         := errorClass():new()
+        cMsgErr     := ''
+        cAliasSQL   := ''
+        jHeader     := oRest:getHeaderRequest()
+        jQuery      := oRest:getQueryRequest()
+        
+        cTecnico    := jQuery['tecnico']
+
+        IF empty(cTecnico)
+            cTecnico := jHeader['tecnico']
+        EndIF
+
+        IF empty(cTecnico)
+            err:description := 'TECNICO NAO INFORMADO'
+            throw err
+        EndIF
+
+        cSQL        := 'SELECT R_E_C_N_O_ RECSZ2'
+        cSQL        += CRLF + 'FROM ' + retSqlName('SZ2') + ' SZ2'
+        cSQL        += CRLF + "WHERE SZ2.D_E_L_E_T_ = ' ' "
+        cSQL        += CRLF + 'AND SZ2.Z2_FILIAL = ? '
+        cSQL        += CRLF + "AND (SZ2.Z2_TECNICO = ? OR SZ2.Z2_TECNICO = '') "
+        cSQL        += CRLF + "AND SZ2.Z2_LIDA <> 'S' "
+        cSQL        += CRLF + 'ORDER BY SZ2.Z2_ID DESC '
+
+        oQueryExec  := fwExecStatement():new(cSQL)
+        oQueryExec:setString(1,xFilial('SZ2'))
+        oQueryExec:setString(2,cTecnico)
+        
+        cAliasSQL   := oQueryExec:openAlias()
+        
+        aNotif      := array(0)
+
+        While !(cAliasSQL)->(eof())
+
+            SZ2->(dbSetOrder(1),dbGoTo((cAliasSQL)->RECSZ2))
+
+            jNotif                 := jsonObject():new()
+            jNotif['id'          ] := SZ2->(alltrim(Z2_ID       ))
+            jNotif['title'       ] := SZ2->(alltrim(Z2_TITULO   ))
+            jNotif['message'     ] := SZ2->(alltrim(Z2_TEXTO    ))
+            jNotif['link'        ] := SZ2->(alltrim(Z2_LINK     ))
+            jNotif['date_notify' ] := SZ2->(alltrim(Z2_DATAHR   ))
+            jNotif['read'        ] := .F.
+
+            aadd(aNotif,jNotif)
+            
+            (cAliasSQL)->(dbSkip())
+
+        Enddo
+
+        (cAliasSQL)->(dbCloseArea())
+
+        jResp                   := jsonObject():new()
+        jResp['status'        ] := 'success'
+        jResp['message'       ] := ''
+        jResp['notificacoes'  ] := aNotif
+
+        oRest:setResponse(fwNoAccent(jResp:toJson()))
+
+    catch e
+
+        IF !empty(cAliasSQL)
+            IF select(cAliasSQL) > 0
+                (cAliasSQL)->(dbCloseArea())
+            EndIF
+        EndIF
+
+        IF !empty(e:description)
+            cMsgErr             := alltrim(e:description)
+        EndIF
+
+        jResp                   := jsonObject():new()
+        jResp['status'        ] := 'error'
+        jResp['message'       ] := cMsgErr
+        jResp['notificacoes'  ] := array(0)
+
+        oRest:setFault(fwNoAccent(jResp:toJson()))
+
+    endtry
+
+Return .T.
+
+/*/{Protheus.doc} U_MARKALLASREAD
+    Marca todas as notificacoes de um tecnico como lidas.
+    @type  Function
+    @author Klaus Wolfgram
+    @since 20/06/2026
+    @version 1.0
+    /*/
+
+    @put(endpoint='/custom/app/agenda/notificacoes/markallasread',description='Marca todas as notificacoes do tecnico como lidas.')
+Function U_MARKALLASREAD() as Logical
+
+    Local err        as Object
+    Local cMsgErr    as Character
+    Local jQuery     as Json
+    Local jResp      as Json
+    Local cTecnico   as Character
+    Local cSQL       as Character
+    Local cAliasSQL  as Character
+    Local nRecSZ2    as Numeric
+    Local oQueryExec as Object
+
+    try
+
+        err         := errorClass():new()
+        cMsgErr     := ''
+        cAliasSQL   := ''
+        
+        jQuery      := oRest:getQueryRequest()
+        cTecnico    := jQuery['tecnico']
+
+        IF empty(cTecnico)
+            err:description := 'TECNICO NAO IDENTIFICADO'
+            throw err
+        EndIF
+
+        cSQL        := 'SELECT R_E_C_N_O_ FROM ' + retSqlName('SZ2') + ' SZ2  '
+        cSQL        += CRLF + "WHERE SZ2.D_E_L_E_T_ = ' ' "
+        cSQL        += CRLF + 'AND SZ2.Z2_FILIAL = ? '
+        cSQL        += CRLF + 'AND SZ2.Z2_TECNICO = ? '
+        cSQL        += CRLF + "AND SZ2.Z2_LIDA <> 'S' "
+
+        oQueryExec  := fwExecStatement():new(cSQL)
+        oQueryExec:setString(1,xFilial('SZ2'))
+        oQueryExec:setString(2,cTecnico)
+        
+        cAliasSQL   := oQueryExec:openAlias()
+
+        While !(cAliasSQL)->(eof())
+
+            nRecSZ2 := (cAliasSQL)->R_E_C_N_O_
+            
+            SZ2->(dbGoTo(nRecSZ2))
+
+            IF !SZ2->(eof()) .and. recLock('SZ2',.F.)
+                SZ2->Z2_LIDA := 'S'
+                SZ2->(msUnlock())
+            EndIF
+
+            (cAliasSQL)->(dbSkip())
+
+        Enddo
+
+        (cAliasSQL)->(dbCloseArea())
+
+        jResp             := jsonObject():new()
+        jResp['status'  ] := 'success'
+        jResp['message' ] := 'Notificacoes atualizadas'
+
+        oRest:setResponse(fwNoAccent(jResp:toJson()))
+
+    catch e
+
+        IF !empty(cAliasSQL)
+            IF select(cAliasSQL) > 0
+                (cAliasSQL)->(dbCloseArea())
+            EndIF
+        EndIF
+
+        IF !empty(e:description)
+            cMsgErr := alltrim(e:description)
+        EndIF
+
+        jResp             := jsonObject():new()
+        jResp['status'  ] := 'error'
+        jResp['message' ] := cMsgErr
+
+        oRest:setFault(fwNoAccent(jResp:toJson()))
+
+    endtry
+
+Return .T.
+
+/*/{Protheus.doc} U_MARKASREAD
+    Marca uma notificacao como lida.
+    @type  Function
+    @author Klaus Wolfgram
+    @since 20/06/2026
+    @version 1.0
+    /*/
+
+    @put(endpoint='/custom/app/agenda/notificacoes/:id',description='Marca uma notificacao como lida.')
+Function U_MARKASREAD() as Logical
+
+    Local err        as Object
+    Local cMsgErr    as Character
+    Local jPath      as Json
+    Local jResp      as Json
+    Local cId        as Character
+    Local cSQL       as Character
+    Local cAliasSQL  as Character
+    Local nRecSZ2    as Numeric
+    Local oQueryExec as Object
+
+    try
+
+        err         := errorClass():new()
+        cMsgErr     := ''
+        cAliasSQL   := ''
+        
+        jPath       := oRest:getPathParamsRequest()
+        cId         := alltrim(cValToChar(jPath['id']))
+
+        IF empty(cId)
+            err:description := 'ID DA NOTIFICACAO NAO INFORMADO'
+            throw err
+        EndIF
+
+        cSQL        := 'SELECT R_E_C_N_O_ FROM ' + retSqlName('SZ2') + ' SZ2 '
+        cSQL        += CRLF + "WHERE SZ2.D_E_L_E_T_ = ' ' "
+        cSQL        += CRLF + 'AND SZ2.Z2_FILIAL = ? '
+        cSQL        += CRLF + 'AND SZ2.Z2_ID = ? '
+
+        oQueryExec  := fwExecStatement():new(cSQL)
+        oQueryExec:setString(1,xFilial('SZ2'))
+        oQueryExec:setString(2,cId)
+        
+        cAliasSQL   := oQueryExec:openAlias()
+
+        IF (cAliasSQL)->(eof())
+            err:description := 'ID DA NOTIFICACAO INVALIDO'
+            throw err
+        EndIF
+
+        nRecSZ2 := (cAliasSQL)->R_E_C_N_O_
+
+        (cAliasSQL)->(dbCloseArea())
+
+        SZ2->(dbGoTo(nRecSZ2))
+
+        IF SZ2->(eof()) .or. !recLock('SZ2',.F.)
+            err:description := 'ERRO AO ATUALIZAR A NOTIFICACAO'
+            throw err
+        EndIF
+
+        SZ2->Z2_LIDA := 'S'
+        SZ2->(msUnlock())
+
+        jResp             := jsonObject():new()
+        jResp['status'  ] := 'success'
+        jResp['message' ] := ''
+
+        oRest:setResponse(fwNoAccent(jResp:toJson()))
+
+    catch e
+
+        IF !empty(cAliasSQL)
+            IF select(cAliasSQL) > 0
+                (cAliasSQL)->(dbCloseArea())
+            EndIF
+        EndIF
+
+        IF !empty(e:description)
+            cMsgErr := alltrim(e:description)
+        EndIF
+
+        jResp             := jsonObject():new()
+        jResp['status'  ] := 'error'
+        jResp['message' ] := cMsgErr
+
+        oRest:setFault(fwNoAccent(jResp:toJson()))
+
+    endtry
+
+Return .T.

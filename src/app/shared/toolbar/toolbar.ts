@@ -5,6 +5,8 @@ import { NetworkService } from '../../core/services/network-service';
 import { AuthService } from '../../core/services/auth-service';
 import { environment } from '../../core/environments/environment';
 import { InstallService } from '../../core/services/install-service';
+import { Router } from '@angular/router';
+import { NotificacoesService } from '../../core/services/notificacoes-service';
 
 @Component({
   selector: 'app-toolbar',
@@ -14,11 +16,14 @@ import { InstallService } from '../../core/services/install-service';
 })
 export class Toolbar {
 
+  private router = inject(Router);
+
   public installService = inject(InstallService);
   public toolbarService = inject(ToolbarService);
   public networkService = inject(NetworkService);
   public authService = inject(AuthService);
   public version = signal<string>(environment.versao);
+  public notificacoesService = inject(NotificacoesService);
 
   public showProfileMenu = signal<boolean>(false);
 
@@ -33,5 +38,7 @@ export class Toolbar {
   }
 
   public onClickBack = () => window.history.back();
+
+  public onClickNotications = () => this.router.navigate(['/notificacoes']);
 
 }

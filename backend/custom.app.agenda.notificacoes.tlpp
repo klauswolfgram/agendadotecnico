@@ -1,0 +1,214 @@
+#include 'totvs.ch'
+#include 'fwmvcdef.ch'
+#include 'tlpp-core.th'
+
+namespace custom.app.agenda.notificacoes
+
+/*/{Protheus.doc} U_BROWSE
+    Programa MVC para acompanhamento dos registros de notificacoes registrados na tabela SZ2
+    @type  Function
+    @author Klaus Wolfgram
+    @since 02/03/2026
+    @version 1.0
+
+    CUSTOM.APP.AGENDA.NOTIFICACOES.BROWSE
+    /*/
+Function U_BROWSE()
+    
+    Private aRotina     := u_menudef()
+    Private oBrowse     := fwMBrowse():new()
+    
+    oBrowse:setAlias('SZ2')
+    oBrowse:setDescription('Cadastro de Notificações do App')
+    oBrowse:setExecuteDef(4)
+    
+    oBrowse:activate()
+    
+Return 
+
+Function U_MENUDEF
+
+    Local aRotina := array(0)
+
+    ADD OPTION aRotina TITLE 'Pesquisar' ACTION 'axPesqui'                                       OPERATION 1 ACCESS 0
+    ADD OPTION aRotina TITLE 'Visualizar'ACTION 'VIEWDEF.CUSTOM.APP.AGENDA.NOTIFICACOES.BROWSE'  OPERATION 2 ACCESS 0 
+    ADD OPTION aRotina TITLE 'Incluir'   ACTION 'VIEWDEF.CUSTOM.APP.AGENDA.NOTIFICACOES.BROWSE'  OPERATION 3 ACCESS 0
+    ADD OPTION aRotina TITLE 'Alterar'   ACTION 'VIEWDEF.CUSTOM.APP.AGENDA.NOTIFICACOES.BROWSE'  OPERATION 4 ACCESS 0
+    ADD OPTION aRotina TITLE 'Excluir'   ACTION 'VIEWDEF.CUSTOM.APP.AGENDA.NOTIFICACOES.BROWSE'  OPERATION 5 ACCESS 0
+    ADD OPTION aRotina TITLE 'Imprimir'  ACTION 'VIEWDEF.CUSTOM.APP.AGENDA.NOTIFICACOES.BROWSE'  OPERATION 8 ACCESS 0
+    ADD OPTION aRotina TITLE 'Copiar'    ACTION 'VIEWDEF.CUSTOM.APP.AGENDA.NOTIFICACOES.BROWSE'  OPERATION 9 ACCESS 0
+
+Return aRotina
+
+/*/{Protheus.doc} MODELDEF
+    (long_description)
+    /*/
+Function U_MODELDEF()
+    
+    Local oModel
+    Local oStruct
+    Local bModelPre := {|x| fnModPre(x)}
+    Local bModelPos := {|x| fnModPos(x)}
+    Local bCommit   := {|x| fnCommit(x)}
+    Local bCancel   := {|x| fnCancel(x)}
+    
+    Local bFieldPre := {|oSubModel,cIdAction,cIdField,xValue| fnFieldPre(oSubModel,cIdAction,cIdField,xValue)}
+    Local bFieldPos := {|oSubModel|                           fnFieldPos(oSubModel)}
+    Local bFieldLoad:= {|oSubModel,lCopy|                     fnFieldLoad(oSubModel,lCopy)}
+
+    oStruct         := fwFormStruct(1,'SZ2')    
+    oModel          := mpFormModel():new('MODEL_NOTIFICACOES',bModelPre,bModelPos,bCommit,bCancel)
+
+    oModel:addFields('SZ2MASTER',,oStruct,bFieldPre,bFieldPos,bFieldLoad)
+    oModel:setDescription('NOTIFICACOES')
+    oModel:setPrimaryKey({'Z2_FILIAL','Z2_ID'})
+    
+Return oModel
+
+/*/{Protheus.doc} VIEWDEF
+(long_description)
+/*/
+Function U_VIEWDEF()
+
+    Local oView
+    Local oModel
+    Local oStruct
+
+    oStruct         := fwFormStruct(2,'SZ2')
+    oModel          := fwLoadModel('CUSTOM.APP.AGENDA.NOTIFICACOES.BROWSE')//fwModelActive()
+    oView           := fwFormView():new()
+
+    oView:setModel(oModel)
+    oView:addField('SZ2MASTER',oStruct,'SZ2MASTER')
+    oView:createHorizontalBox('BOXSZ2',100)
+    oView:setOwnerView('SZ2MASTER','BOXSZ2')
+    
+Return oView
+
+/*/{Protheus.doc} fnModPre
+    Funcao de pre validacao do modelo de dados
+    @type  Static Function
+    /*/
+Static Function fnModPre(oModel)
+
+    Local lValid        := .T.
+    
+Return lValid
+
+/*/{Protheus.doc} fnModPos
+    Funcao de validacao final do modelo de dados, tudook
+    @type  Static Function
+    /*/
+Static Function fnModPos(oModel)
+
+    Local lValid    := .T.
+    Local nOperation:= oModel:getOperation()
+
+    IF nOperation == 5
+
+    EndIF    
+    
+Return lValid
+
+/*/{Protheus.doc} fnCommit
+    Funcao executada para gravacao dos dados
+    @type  Static Function
+    /*/
+Static Function fnCommit(oModel)
+
+    Local lCommit as Logical
+
+    lCommit     := fwFormCommit(oModel,/*bBefore*/,/*bAfter*/,/*bAfterTTS*/,/*bInTTS*/,/*bBeforeTTS*/,/*bIntegEAI*/)
+    
+    IF !lCommit
+        oModel:setErrorMessage(,,,,'Gravação não efetuada','Ocorreu um erro na gravação dos dados')
+    EndIF    
+
+Return lCommit
+
+/*/{Protheus.doc} fnCancel
+    Funcao executada para validacao do cancelamento dos dados
+    @type  Static Function
+    /*/
+Static Function fnCancel(oModel)
+
+    Local lCancel := fwFormCancel(oModel)
+    
+Return lCancel
+
+/*/{Protheus.doc} fnFieldPre
+    Pre validacao do submodelo
+    @type  Static Function
+    /*/
+Static Function fnFieldPre(oSubModel,cIdAction,cIdField,xValue)
+
+    Local lValid     := .T.
+
+Return lValid
+
+/*/{Protheus.doc} fnFieldPos
+    Validacao de tudook do submodelo
+    @type  Static Function
+    /*/
+Static Function fnFieldPos(oSubModel)
+
+    Local lValid := .T.
+    
+Return lValid
+
+/*/{Protheus.doc} fnFieldLoad
+    Funcao para carregamento dos dados
+    @type  Static Function
+    /*/
+Static Function fnFieldLoad(oSubModel,lCopy)
+    
+Return formLoadField(oSubModel,lCopy)
+
+/*/{Protheus.doc} U_INCLUIR
+    Funcao para incluir nova notificacao
+    @type  Function
+    @author Klaus Wolfgram
+    @since 02/03/2026
+    @version 1.0
+
+    custom.app.agenda.notificacoes.u_incluir(cTecnico,cOrigem,cTitulo,cMensagem,cLink)
+    /*/
+Function U_INCLUIR(cTecnico as Character, cOrigem as Character,cTitulo as Character,cMensagem as Character,cLink as Character) as Logical
+
+    Local oModel    as Object
+    Local lret      as Logical
+    Local cNomeTec  as Character
+    Local cDataHr   as Character
+
+    IF AA1->(dbSetOrder(1),dbSeek(xFilial(alias())+cTecnico))
+        cNomeTec    := AA1->AA1_NOMTEC
+    EndIF
+
+    cDataHr         := DTOC(date()) + ' ' + LEFT(time(),5)
+
+    oModel          := fwLoadModel('CUSTOM.APP.AGENDA.NOTIFICACOES.BROWSE')
+
+    oModel:setOperation(MODEL_OPERATION_INSERT)
+    oModel:activate()
+    
+    oModel:getModel('SZ2MASTER'):setValue('Z2_TECNICO',LEFT(cTecnico ,tamSX3('Z2_TECNICO')[1]))
+    oModel:getModel('SZ2MASTER'):setValue('Z2_NOMETEC',LEFT(cNomeTec ,tamSX3('Z2_NOMETEC')[1]))
+    oModel:getModel('SZ2MASTER'):setValue('Z2_ORIGEM' ,LEFT(cOrigem  ,tamSX3('Z2_ORIGEM' )[1]))
+    oModel:getModel('SZ2MASTER'):setValue('Z2_TITULO' ,LEFT(cTitulo  ,tamSX3('Z2_TITULO' )[1]))
+    oModel:getModel('SZ2MASTER'):setValue('Z2_TEXTO'  ,LEFT(cMensagem,tamSX3('Z2_TEXTO'  )[1]))
+    oModel:getModel('SZ2MASTER'):setValue('Z2_LINK'   ,LEFT(cLink    ,tamSX3('Z2_LINK'   )[1]))
+    oModel:getModel('SZ2MASTER'):setValue('Z2_DATAHR' ,LEFT(cDataHr  ,tamSX3('Z2_DATAHR' )[1]))
+
+    IF oModel:vlddata()
+        oModel:commitdata()
+        lret     := .T.
+    Else
+        xError   := oModel:getErrorMessage()
+        fwAlertError(if(valtype(xError) == 'A',xError[6],'erro ao incluir notificacao'))
+    EndIF
+
+    oModel:deactivate()
+    oModel:destroy()
+    
+Return lret
+ 

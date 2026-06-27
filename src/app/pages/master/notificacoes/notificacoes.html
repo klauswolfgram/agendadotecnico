@@ -1,1 +1,52 @@
-<p>notificacoes works!</p>
+<section class="notifications-container">
+
+    @if(notificacoes().length > 0) {
+        <div class="notifications-actions">
+            <span>{{notificacoes().length}} não lida(s)</span>
+            <button type="button" class="mark-all-button" aria-label="Marcar todas como lidas" (click)="markAllAsRead()"> 
+                <span class="material-icons">done_all</span>
+                Marcar todas como lidas
+            </button>
+        </div>
+    }
+
+    <div class="notifications-list">
+        @if(notificacoes().length === 0) {
+            <div class="empty-state">
+                <span class="material-icons">notifications_none</span>
+                <span>Nenhuma notificação não lida.</span>
+            </div>
+        }
+
+        @for(item of notificacoes(); track item.id) {
+            <article class="notification-item">
+                <div class="notification-icon">
+                    <span class="material-icons">notifications</span>
+                </div>
+
+                <div class="notification-content">
+                    <h2>{{item.title}}</h2>
+                    <p>{{item.message}}</p>
+                    @if(item.date_notify) {
+                        <time>{{item.date_notify}}</time>
+                    }
+
+                    <div class="notification-actions">
+                        @if(item.link) {
+                            <button type="button" class="action-button open-button" aria-label="Abrir notificacao" (click)="openLink(item.link)">
+                                <span class="material-icons">open_in_new</span>
+                                Abrir registro
+                            </button>
+                        }
+
+                        <button type="button" class="action-button read-button" aria-label="Marcar notificacao como lida" (click)="markAsRead(item)">
+                            <span class="material-icons">done</span>
+                            Marcar como lida
+                        </button>
+                    </div>
+                </div>
+            </article>
+        }
+    </div>
+
+</section>
