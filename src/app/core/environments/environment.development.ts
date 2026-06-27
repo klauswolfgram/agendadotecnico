@@ -1,6 +1,6 @@
 export const environment = {
     ambiente: 'dev',
-    versao: '0.6 - 06/05/2026',
+    versao: '1.0',
     url_base: 'https://erp:2200/api/',
     tenantId: '99,01',
     STORAGE_NAME: 'agenda-do-tecnico',
