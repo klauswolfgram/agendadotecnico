@@ -38,6 +38,7 @@ export class Master implements OnInit, OnDestroy {
   ngOnInit(): void {
     
     if(this.section.userid === 'demo'){
+      this.erpService.loadOcorrenciasMock();
       this.erpService.loadAgendaMock();
       this.notificationService.loadNotificacoesMock();
       return;

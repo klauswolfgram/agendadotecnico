@@ -34,6 +34,16 @@ export class ErpService implements OnDestroy {
     this.sub.unsubscribe();
   }
 
+  public loadOcorrenciasMock = async () => {
+    
+    const dados = '{"status":"success","recurso":"ocorrencias","message":"","data":[{"id":1,"filial":"","codigo":"000001","descri":"PROBLEMA TECNICO"},{"id":2,"filial":"","codigo":"000002","descri":"EQUIPAMENTO QUEBRADO"},{"id":3,"filial":"","codigo":"000003","descri":"CAIXA AMASSADA"},{"id":7,"filial":"","codigo":"000004","descri":"ATIVAR EQUIPAMENTO SUBSTITUIDO"},{"id":4,"filial":"","codigo":"000010","descri":"LEVANTAMENTO DE DADOS"},{"id":8,"filial":"","codigo":"000011","descri":"DEFEITO NA FUNCAO TELFOM"},{"id":5,"filial":"","codigo":"000012","descri":"MONTAGEM DE AMBIENTE"},{"id":6,"filial":"","codigo":"000020","descri":"PROBLEMA UTILIZACAO"}]}';
+    const response = JSON.parse(dados);
+    
+    await this.storage.set<Tabela>(environment.STORAGE_KEY_OCORRENCIAS,response);
+    
+    this.ocorrencias.set(response.data);
+  }
+
   public loadOcorrencias = () => {
     this.http.get<Tabela>(`${environment.url_base}custom/app/agenda/tabelas/ocorrencias`)
     .pipe(tap({
