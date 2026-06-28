@@ -40,7 +40,10 @@ export class NotificacoesService {
       const response = JSON.parse(dados);
       const notificacoes = response.notificacoes ?? [];
 
+      this.updateLocal(notificacoes);
       this.lista.set(notificacoes);
+      
+      return;
       
     }
     
