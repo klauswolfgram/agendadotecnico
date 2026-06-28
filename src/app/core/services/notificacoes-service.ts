@@ -30,22 +30,22 @@ export class NotificacoesService {
 
   }
 
+  public loadNotificacoesMock = () => {
+
+    const dados = '{"status":"success","message":"","notificacoes":[{"id":"000000004","title":"Nova OS: 120625/01","message":"Um nova OS","link":"/agendamento/38","date_notify":"27/06/2026 12:35","read":false},{"id":"000000003","title":"Nova OS: 120626/01","message":"Um nova OS","link":"/agendamento/39","date_notify":"20/06/2026 18:26","read":false}]}';
+    const response = JSON.parse(dados);
+    const notificacoes = response.notificacoes ?? [];
+
+    this.updateLocal(notificacoes);
+    this.lista.set(notificacoes);
+      
+    return;
+
+  }
+
   public loadFromAPI = () => {
     
     const tecnico = this.auth.current.tecnico.codtec;
-
-    if(tecnico === 'demo'){
-      
-      const dados = '{"status":"success","message":"","notificacoes":[{"id":"000000004","title":"Nova OS: 120625/01","message":"Um nova OS","link":"/agendamento/38","date_notify":"27/06/2026 12:35","read":false},{"id":"000000003","title":"Nova OS: 120626/01","message":"Um nova OS","link":"/agendamento/39","date_notify":"20/06/2026 18:26","read":false}]}';
-      const response = JSON.parse(dados);
-      const notificacoes = response.notificacoes ?? [];
-
-      this.updateLocal(notificacoes);
-      this.lista.set(notificacoes);
-      
-      return;
-      
-    }
     
     if(!tecnico) {
       this.loadFromStorage();

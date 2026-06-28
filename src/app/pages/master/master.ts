@@ -39,6 +39,7 @@ export class Master implements OnInit, OnDestroy {
     
     if(this.section.userid === 'demo'){
       this.erpService.loadAgendaMock();
+      this.notificationService.loadNotificacoesMock();
       return;
     }
 
