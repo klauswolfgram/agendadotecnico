@@ -1,6 +1,6 @@
 {
   "name": "Agenda do Técnico",
-  "short_name": "Agend. Tecnico.",
+  "short_name": "Agend. Técnico",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
